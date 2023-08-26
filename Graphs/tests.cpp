@@ -258,4 +258,7 @@ TEST(graph, generated3) {
     res1 = dfs(graph);
     res2 = mygraph.dfs();
     res3 = mygraph.bfs();
+
+    ASSERT_EQ(res1, res2);
+    ASSERT_EQ(res1, res3);
 }
