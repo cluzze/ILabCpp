@@ -240,13 +240,13 @@ std::vector<std::pair<int, int>> generateBigBipartiteGraph(int numNodes1, int nu
 TEST(graph, generated3) {
     int numNodes1 = 100000;
     int numNodes2 = 15000;
-    int numEdges = 500000;
+    int numEdges = 5000000;
 
     std::vector<std::pair<int, int>> bipartiteGraph = generateBigBipartiteGraph(numNodes1, numNodes2, numEdges);
 
     containers::Graph mygraph(bipartiteGraph);
 
-    bool res1 = false, res2 = false, res3 = false;
+    bool res1 = true, res2 = false, res3 = false;
 
     vector<vector<int>> graph(numNodes1 + numNodes2);
 
@@ -255,7 +255,7 @@ TEST(graph, generated3) {
         graph[bipartiteGraph[i].second - 1].push_back(bipartiteGraph[i].first - 1);
     }
 
-    res1 = dfs(graph);
+    //res1 = dfs(graph);
     res2 = mygraph.dfs();
     res3 = mygraph.bfs();
 

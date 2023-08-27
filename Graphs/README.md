@@ -1,6 +1,6 @@
 Graphs
 ===
-Implimintation of the Graph desrcibed in TAOCP 7.2.1
+Implementation of the Graph desrcibed in TAOCP 7.2.1
 
 Requirements
 ===
