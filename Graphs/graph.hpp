@@ -9,36 +9,48 @@
 
 namespace containers
 {
+	struct ColorResult {
+		bool res;
+		std::vector<int> cycle;
+	};
 	class Graph {
 	public:
-		Graph(std::vector<std::pair<int, int>> edges);
+		template <typename It>
+		Graph(It begin, It end) ;
 
 		Graph(std::initializer_list<std::pair<int, int>> init);
 
-		void dump();
+		void dump() const;
 
-		void printColor();
+		void printColor() const;
+
+		/*Addes adge between two existing vertices*/
+		void addEdge(int p, int q);
 
 		/*2-colors graph if possible using dfs*/
-		bool dfs();
+		ColorResult dfs();
 
 		/*2-colors graph if possible using bfs*/
-		bool bfs();
+		ColorResult bfs();
+
+		void clearColor();
 
 	private:
 		void LinkBefore(int target, int before);
 
-		bool dfs_impl(int i, int color, std::vector<int>& used);
+		bool dfs_impl(int i, int color, std::vector<int>& cycle);
 
-		bool bfs_impl(int i, std::vector<int>& used);
+		bool bfs_impl(int i, std::vector<int>& cycle);
+
+		void findCycle();
 
 		struct EdgeInfo {
 			int ta, na, pa;
 			int color;
 		};
 
-		int v{}, e{};
-		std::vector<EdgeInfo> graph{};
+		int v = 0, e = 0;
+		std::vector<EdgeInfo> graph;
 	};
 
 	void Graph::LinkBefore(int target, int before) {
@@ -48,115 +60,122 @@ namespace containers
     	graph[target].pa = before;
 	}
 
-	Graph::Graph(std::vector<std::pair<int, int>> init) {
-
-		e = init.size();
-		v = 0;
-
-		for (const auto& p : init) {
-			v = std::max(v, std::max(p.first, p.second));
+	template <typename It>
+	Graph::Graph(It begin, It end) {
+		for (auto it = begin; it != end; ++it) {
+			v = std::max({v, it->first, it->second});
 		}
 
-		graph.resize(v + 2 * e, { 0, 0, 0, 0 });
+		graph.resize(v, { 0, 0, 0, -1 });
 
 		for (int i = 0; i < v; i++) {
 			graph[i].na = i;
         	graph[i].pa = i;
 		}
-
-		int i = 0;
 		
-		for (const auto& it : init) {
-			int p = it.first;
-			int q = it.second;
+		for (auto it = begin; it != end; ++it) {
+			int p = it->first;
+			int q = it->second;
 			
-			int ep = 2 * i + v;
-			int eq = 2 * i + 1 + v;
-
-			graph[ep].ta = p - 1;
-			graph[eq].ta = q - 1;
-
-			LinkBefore(p - 1, eq);
-			LinkBefore(q - 1, ep);
-			i++;
+			addEdge(p, q);
 		}
 	}
 
 	Graph::Graph(std::initializer_list<std::pair<int, int>> init) : 
-		Graph(std::vector<std::pair<int, int>>(init.begin(), init.end())) {}
+		Graph(init.begin(), init.end()) {}
 
-	bool Graph::bfs() {
-		int color = 0;
-		std::vector<int> used(v, -1);
-		
-		for (int i = 0; i < v; i++)
-			if (used[i] == -1)
-				if (!bfs_impl(i, used))
-					return false;
-		
-		for (int i = 0; i < v; i++)
-			graph[i].color = used[i];
+	void Graph::addEdge(int p, int q) {
+		int ep = 2 * e + v;
+		int eq = 2 * e + 1 + v;
 
-		return true;
+		graph.push_back({p - 1, 0, 0, -1});
+		graph.push_back({q - 1, 0, 0, -1});
+
+		LinkBefore(p - 1, eq);
+		LinkBefore(q - 1, ep);
+		e++;
 	}
 
-	bool Graph::bfs_impl(int i, std::vector<int>& used) {
-		std::queue<int> q;
-		q.push(i);
-		used[i] = 0;
+	ColorResult Graph::bfs() {
+		int color = 0;
+		ColorResult res;
 
-		while (!q.empty()) {
-			int v = q.front();
-			q.pop();
-			for (int e = graph[v].na; e != v; e = graph[e].na) {
-				if (used[graph[e].ta] == used[v])
-					return false;
-			
-				if (used[graph[e].ta] == -1) {
-					used[graph[e].ta] = used[v] ^ 1;
-					q.push(graph[e].ta);
-				}
+		res.res = false;
+		for (int i = 0; i < v; i++)
+			if ((!bfs_impl(i, res.cycle))) {
+				clearColor();
+				return res;
 			}
+
+		std::for_each(graph.begin(), graph.begin() + v, [](EdgeInfo& v) {
+        	v.color %= 2;
+    	});
+		
+		res.res = true;
+		return res;
+	}
+
+	bool Graph::bfs_impl(int i, std::vector<int>& cycle) {
+		for (int e = graph[i].na; e != i; e = graph[e].na) {
+			int next = graph[e].ta;
+
+			if ((graph[next].color != -1) && graph[next].color % 2 == graph[i].color % 2) {
+				clearColor();
+				cycle = dfs().cycle;
+				return false;
+			}
+
+			graph[next].color = std::max(graph[next].color, graph[i].color + 1);
 		}
 
 		return true;
 	}
 	
-	bool Graph::dfs() {
+	ColorResult Graph::dfs() {
 		int color = 0;
-		std::vector<int> used(v, -1);
-		
-		for (int i = 0; i < v; i++)
-			if (used[i] == -1)
-				if (!dfs_impl(i, color, used))
-					return false;
-				
-		for (int i = 0; i < v; i++)
-			graph[i].color = used[i];
+		ColorResult res;
 
-		return true;
+		res.res = false;
+
+		for (int i = 0; i < v; i++)
+			if ((graph[i].color == -1) && (!dfs_impl(i, color, res.cycle))) {
+				clearColor();
+				return res;
+			}
+
+		res.res = true;
+		return res;
 	}
 
-	bool Graph::dfs_impl(int i, int color, std::vector<int>& used) {
-		used[i] = color;
+	bool Graph::dfs_impl(int i, int color, std::vector<int>& cycle) {
+		graph[i].color = color;
 		for (int e = graph[i].na; e != i; e = graph[e].na) {
-			if (used[graph[e].ta] == color)
+			if (graph[graph[e].ta].color == color) {
+				cycle.push_back(i);
 				return false;
-			
-			if (used[graph[e].ta] == -1)
-				if (!dfs_impl(graph[e].ta, color ^ 1, used))
-					return false;	
+			}
+				
+			if ((graph[graph[e].ta].color == -1) && (!dfs_impl(graph[e].ta, color ^ 1, cycle))) {
+				cycle.push_back(i);
+				return false;
+			}
 		}
 		return true;
 	}
 
-	void Graph::dump() {
-		for (int i = 0; i < v + 2 * e; i++) {
-			std::cout << i << ' ' << graph[i].ta + 1 << ' ' << graph[i].na << ' ' << graph[i].pa << '\n';
+	void Graph::clearColor() {
+		for (auto& it : graph) {
+			it.color = -1;
 		}
 	}
 
-	void Graph::printColor() {
+	void Graph::dump() const {
+		for (int i = 0; i < v + 2 * e; i++) {
+			std::cout << i << ' ' << graph[i].ta << ' ' << graph[i].na << ' ' << graph[i].pa << '\n';
+		}
+	}
+
+	void Graph::printColor() const {
 		for (int i = 0; i < v; i++) {
 			char color = graph[i].color ? 'r' : 'b';
 			std::cout << i + 1 << ' ' << color << ' ';

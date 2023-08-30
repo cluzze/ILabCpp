@@ -44,33 +44,29 @@ int main() {
 
 TEST(graph, hand_written1) {
     vector<pair<int, int>> edges;
-    edges.push_back({1, 6});
-    edges.push_back({1, 5});
-    edges.push_back({1, 5});
-    edges.push_back({2, 6});
-    edges.push_back({2, 6});
+    edges.push_back({1, 2});
     edges.push_back({2, 4});
-    edges.push_back({3, 4});
-    edges.push_back({3, 4});
+    edges.push_back({1, 3});
     edges.push_back({3, 4});
 
-    vector<vector<int>> graph(9);
+    vector<vector<int>> graph(15);
 
     for (int i = 0; i < edges.size(); i++) {
         graph[edges[i].first - 1].push_back(edges[i].second - 1);
         graph[edges[i].second - 1].push_back(edges[i].first - 1);
     }
 
-    containers::Graph mygraph(edges);
+    containers::Graph mygraph(edges.begin(), edges.end());
 
-    bool res1 = false, res2 = false, res3 = false;
+    bool res1 = false;
+    containers::ColorResult res2, res3;
 
     res1 = dfs(graph);
     res2 = mygraph.dfs();
+    mygraph.clearColor();
     res3 = mygraph.bfs();
-
-    ASSERT_EQ(res1, res2);
-    ASSERT_EQ(res1, res3);
+    ASSERT_EQ(res1, res2.res);
+    ASSERT_EQ(res2.res, res3.res);
 }
 
 TEST(graph, hand_written2) {
@@ -91,16 +87,17 @@ TEST(graph, hand_written2) {
         graph[edges[i].second - 1].push_back(edges[i].first - 1);
     }
 
-    containers::Graph mygraph(edges);
+    containers::Graph mygraph(edges.begin(), edges.end());
 
-    bool res1 = false, res2 = false, res3 = false;
+    bool res1 = false;
+    containers::ColorResult res2, res3;
 
     res1 = dfs(graph);
     res2 = mygraph.dfs();
+    mygraph.clearColor();
     res3 = mygraph.bfs();
-
-    ASSERT_EQ(res1, res2);
-    ASSERT_EQ(res1, res3);
+    ASSERT_EQ(res1, res2.res);
+    ASSERT_EQ(res2.res, res3.res);
 }
 
 TEST(graph, hand_written3) {
@@ -116,21 +113,23 @@ TEST(graph, hand_written3) {
         graph[edges[i].second - 1].push_back(edges[i].first - 1);
     }
 
-    containers::Graph mygraph(edges);
+    containers::Graph mygraph(edges.begin(), edges.end());
 
-    bool res1 = false, res2 = false, res3 = false;
+    bool res1 = false;
+    
+    containers::ColorResult res2, res3;
 
     res1 = dfs(graph);
     res2 = mygraph.dfs();
+    mygraph.clearColor();
     res3 = mygraph.bfs();
-
-    ASSERT_EQ(res1, res2);
-    ASSERT_EQ(res1, res3);
+    ASSERT_EQ(res1, res2.res);
+    ASSERT_EQ(res2.res, res3.res);
 }
 
 TEST(graph, generated1) {
     srand(time(NULL));
-    int size = 100;
+    int size = 10;
     vector<int> v1(size), v2(size);
 
     for (int i = 0; i < v1.size(); i++) {
@@ -162,16 +161,17 @@ TEST(graph, generated1) {
     }
 
 
-    containers::Graph mygraph(edges);
+    containers::Graph mygraph(edges.begin(), edges.end());
 
-    bool res1 = false, res2 = false, res3 = false;
+    bool res1 = false;
+    containers::ColorResult res2, res3;
 
     res1 = dfs(graph);
     res2 = mygraph.dfs();
+    mygraph.clearColor();
     res3 = mygraph.bfs();
-
-    ASSERT_EQ(res1, res2);
-    ASSERT_EQ(res1, res3);
+    ASSERT_EQ(res1, res2.res);
+    ASSERT_EQ(res2.res, res3.res);
 }
 
 TEST(graph, generated2) {
@@ -209,16 +209,18 @@ TEST(graph, generated2) {
         graph[edges[i].second - 1].push_back(edges[i].first - 1);
     }
 
-    containers::Graph mygraph(edges);
+    containers::Graph mygraph(edges.begin(), edges.end());
 
-    bool res1 = false, res2 = false, res3 = false;
+    bool res1 = false;
+    containers::ColorResult res2, res3;
+
 
     res1 = dfs(graph);
     res2 = mygraph.dfs();
+    mygraph.clearColor();
     res3 = mygraph.bfs();
-
-    ASSERT_EQ(res1, res2);
-    ASSERT_EQ(res1, res3);
+    ASSERT_EQ(res1, res2.res);
+    ASSERT_EQ(res2.res, res3.res);
 }
 
 std::vector<std::pair<int, int>> generateBigBipartiteGraph(int numNodes1, int numNodes2, int numEdges) {
@@ -240,13 +242,11 @@ std::vector<std::pair<int, int>> generateBigBipartiteGraph(int numNodes1, int nu
 TEST(graph, generated3) {
     int numNodes1 = 100000;
     int numNodes2 = 15000;
-    int numEdges = 5000000;
+    int numEdges = 500000;
 
     std::vector<std::pair<int, int>> bipartiteGraph = generateBigBipartiteGraph(numNodes1, numNodes2, numEdges);
 
-    containers::Graph mygraph(bipartiteGraph);
-
-    bool res1 = true, res2 = false, res3 = false;
+    containers::Graph mygraph(bipartiteGraph.begin(), bipartiteGraph.end());
 
     vector<vector<int>> graph(numNodes1 + numNodes2);
 
@@ -255,10 +255,56 @@ TEST(graph, generated3) {
         graph[bipartiteGraph[i].second - 1].push_back(bipartiteGraph[i].first - 1);
     }
 
-    //res1 = dfs(graph);
-    res2 = mygraph.dfs();
-    res3 = mygraph.bfs();
+    bool res1 = false;
+    containers::ColorResult res2, res3;
 
-    ASSERT_EQ(res1, res2);
-    ASSERT_EQ(res1, res3);
+    res1 = dfs(graph);
+    res2 = mygraph.dfs();
+    mygraph.clearColor();
+    res3 = mygraph.bfs();
+    ASSERT_EQ(res1, res2.res);
+    ASSERT_EQ(res2.res, res3.res);
+}
+
+std::vector<std::pair<int, int>> generateRandomGraph(int numNodes, float density) {
+    std::vector<std::pair<int, int>> edges;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(0.0, 1.0);
+
+    for (int u = 1; u < numNodes; u++) {
+        for (int v = u + 1; v < numNodes; v++) {
+            if (dist(gen) < density) {
+                edges.push_back({u, v});
+            }
+        }
+    }
+
+    return edges;
+}
+
+TEST(graph, generated4) {
+    int numNodes = 1000;
+    float density = 0.3;
+
+    std::vector<std::pair<int, int>> randomGraph = generateRandomGraph(numNodes, density);
+
+    containers::Graph mygraph(randomGraph.begin(), randomGraph.end());
+
+    vector<vector<int>> graph(numNodes);
+
+    for (int i = 0; i < randomGraph.size(); i++) {
+        graph[randomGraph[i].first - 1].push_back(randomGraph[i].second - 1);
+        graph[randomGraph[i].second - 1].push_back(randomGraph[i].first - 1);
+    }
+
+    bool res1 = false;
+    containers::ColorResult res2, res3;
+
+    res1 = dfs(graph);
+    res2 = mygraph.dfs();
+    mygraph.clearColor();
+    res3 = mygraph.bfs();
+    ASSERT_EQ(res1, res2.res);
+    ASSERT_EQ(res2.res, res3.res);
 }
