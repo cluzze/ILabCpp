@@ -36,9 +36,11 @@ namespace containers
 		void clearColor();
 
 	private:
+		void Unlink(int taget);
+
 		void LinkBefore(int target, int before);
 
-		bool dfs_impl(int i, int color, std::vector<int>& cycle);
+		bool dfs_impl(int i, std::vector<int>& cycle);
 
 		bool bfs_impl(int i, std::vector<int>& cycle);
 
@@ -47,26 +49,36 @@ namespace containers
 		struct EdgeInfo {
 			int ta, na, pa;
 			int color;
+			int parent;
+			int link;
 		};
 
 		int v = 0, e = 0;
 		std::vector<EdgeInfo> graph;
 	};
 
-	void Graph::LinkBefore(int target, int before) {
-		graph[before].na = target;
+    void Graph::Unlink(int target) {
+		int before = graph[target].pa;
+		int after = graph[target].na;
+		graph[before].na = after;
+		graph[after].pa = before;
+    }
+
+    void Graph::LinkBefore(int target, int before)
+    {
+        graph[before].na = target;
 		graph[before].pa = graph[target].pa;
 		graph[graph[target].pa].na = before;
     	graph[target].pa = before;
-	}
+    }
 
-	template <typename It>
+    template <typename It>
 	Graph::Graph(It begin, It end) {
 		for (auto it = begin; it != end; ++it) {
 			v = std::max({v, it->first, it->second});
 		}
 
-		graph.resize(v, { 0, 0, 0, -1 });
+		graph.resize(v, { 0, 0, 0, -1, -1, -1 });
 
 		for (int i = 0; i < v; i++) {
 			graph[i].na = i;
@@ -135,29 +147,52 @@ namespace containers
 		int color = 0;
 		ColorResult res;
 
-		res.res = false;
-
-		for (int i = 0; i < v; i++)
-			if ((graph[i].color == -1) && (!dfs_impl(i, color, res.cycle))) {
-				clearColor();
-				return res;
-			}
-
 		res.res = true;
+
+		for (int i = v - 1; i >= 0; i--) {
+			if ((graph[i].color == -1) && !(dfs_impl(i, res.cycle))) {
+				res.res = false;
+				break;
+			}
+		}
+		
 		return res;
 	}
 
-	bool Graph::dfs_impl(int i, int color, std::vector<int>& cycle) {
-		graph[i].color = color;
-		for (int e = graph[i].na; e != i; e = graph[e].na) {
-			if (graph[graph[e].ta].color == color) {
-				cycle.push_back(i);
-				return false;
-			}
-				
-			if ((graph[graph[e].ta].color == -1) && (!dfs_impl(graph[e].ta, color ^ 1, cycle))) {
-				cycle.push_back(i);
-				return false;
+	bool Graph::dfs_impl(int i, std::vector<int>& cycle) {
+		bool res = true;
+		int v1, v2;
+		int s;
+		int a;
+
+		graph[i].color = 0;
+		graph[i].parent = i;
+		graph[i].link = -1; //??
+		s = i;
+
+		while (s != -1) {
+			v1 = s;
+			s = graph[s].link;
+			a = graph[v1].na;
+			
+			for (a = graph[v1].na; a != v1; a = graph[a].na) {
+				v2 = graph[a].ta;
+				if (graph[v2].color == -1) {
+					graph[v2].parent = v1;
+					graph[v2].color = 1 - graph[v1].color;
+					graph[v2].link = s;
+					s = v2;
+				} else if (graph[v1].color == graph[v2].color) {
+					while (v1 != graph[v2].parent) {
+						cycle.push_back(v1);
+						//std::cout << v1 << ' ';
+						v1 = graph[v1].parent;
+					}
+					cycle.push_back(v1);
+					cycle.push_back(v2);
+					//std::cout << v1 << ' ' << v2 << '\n';
+					return false;
+				}
 			}
 		}
 		return true;

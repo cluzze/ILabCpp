@@ -9,25 +9,27 @@ using namespace containers;
 
 std::vector<std::pair<int, int>> readInput() {
 	std::vector<std::pair<int, int>> edges;
-	std::regex inputPattern(R"((\d+) -- (\d+), (\d+))");
+	std::regex pattern(R"(^\s*(\d*)\s*--\s*(\d*)\s*,\s*(\d*)\s*$)");
 	std::string input;
 
 	while (std::getline(std::cin, input)) {
+		if (input.empty())
+			continue;
+
 		std::smatch matches;
-
-        if (std::regex_match(input, matches, inputPattern)) {
-            int p = std::stoi(matches[1]);
-            int q = std::stoi(matches[2]);
-            int w = std::stoi(matches[3]);
-
-            if (p > 0 && q > 0) {
-                edges.push_back({p, q});
-            } else {
-                std::cerr << "Invalid input" << '\n';
-            }
-        } else {
-            std::cerr << "Invalid input" << '\n';
-        }
+		std::vector<int> values;
+		if (std::regex_match(input, matches, pattern)) {
+			for (int i = 1; i < matches.size(); ++i) {
+				if (!matches.str(i).empty()) {
+					int value = std::stoi(matches.str(i));
+					values.push_back(value);
+				}
+			}
+			edges.push_back({values[0], values[1]});
+		} else {
+			std::cout << "Expected input format: \"v -- u, w\"" << std::endl;
+			exit(1);
+		}
 	}
 
 	return edges;
