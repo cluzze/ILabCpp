@@ -40,12 +40,13 @@ int main() {
 
 	Graph g(edges.begin(), edges.end());
 	ColorResult color = g.bfs();
+	//g.dump();
 	if (color.res)
 		g.printColor();
 	else {
 		std::cout << "graph contains cycle of odd length:" << '\n';
 		for (int i = 0; i < color.cycle.size(); i++) {
-			std::cout << i + 1 << ' ';
+			std::cout << color.cycle[i] + 1 << ' ';
 		}
 		std::cout << '\n';
 	}

@@ -33,7 +33,7 @@ namespace containers
 		/*2-colors graph if possible using bfs*/
 		ColorResult bfs();
 
-		void clearColor();
+		void clearFields();
 
 	private:
 		void Unlink(int taget);
@@ -44,13 +44,13 @@ namespace containers
 
 		bool bfs_impl(int i, std::vector<int>& cycle);
 
-		void findCycle();
-
+		void saveCycle(int v1, int v2, std::vector<int>& cycle);
 		struct EdgeInfo {
 			int ta, na, pa;
 			int color;
 			int parent;
 			int link;
+			int link2;
 		};
 
 		int v = 0, e = 0;
@@ -78,7 +78,7 @@ namespace containers
 			v = std::max({v, it->first, it->second});
 		}
 
-		graph.resize(v, { 0, 0, 0, -1, -1, -1 });
+		graph.resize(v, { 0, 0, 0, -1, -1, -1, -1 });
 
 		for (int i = 0; i < v; i++) {
 			graph[i].na = i;
@@ -100,51 +100,116 @@ namespace containers
 		int ep = 2 * e + v;
 		int eq = 2 * e + 1 + v;
 
-		graph.push_back({p - 1, 0, 0, -1});
-		graph.push_back({q - 1, 0, 0, -1});
+		graph.push_back({p - 1, 0, 0, -1, -1, -1, -1});
+		graph.push_back({q - 1, 0, 0, -1, -1, -1, -1});
 
 		LinkBefore(p - 1, eq);
 		LinkBefore(q - 1, ep);
 		e++;
 	}
 
+	void Graph::saveCycle(int v1, int v2, std::vector<int>& cycle) {
+		for (int i = 0; i < v; i++)
+			graph[i].link = -1;
+
+		int cycleSize = 0;
+		int old_v2 = v2;
+		graph[v2].link = 1;
+		while (v2 != graph[v2].parent) {
+			graph[v2].link = 1;
+			v2 = graph[v2].parent;
+		}
+		graph[v2].link = 1;
+		while (graph[v1].link == -1) {
+			cycleSize++;
+			cycle.push_back(v1);
+			v1 = graph[v1].parent;
+		}
+		int size = cycle.size() + cycleSize + 1;
+		cycle.resize(size);
+		v2 = old_v2;
+		for (int i = size - 1; i >= size - cycleSize - 1; i--) {
+			cycle[i] = v2;
+			v2 = graph[v2].parent;
+		}
+	}
+
 	ColorResult Graph::bfs() {
-		int color = 0;
 		ColorResult res;
 
 		res.res = false;
-		for (int i = 0; i < v; i++)
-			if ((!bfs_impl(i, res.cycle))) {
-				clearColor();
+		for (int i = v - 1; i >= 0; i--)
+			if ((graph[i].color == -1) && (!bfs_impl(i, res.cycle))) {
+				clearFields();
 				return res;
 			}
-
-		std::for_each(graph.begin(), graph.begin() + v, [](EdgeInfo& v) {
-        	v.color %= 2;
-    	});
 		
 		res.res = true;
 		return res;
 	}
 
 	bool Graph::bfs_impl(int i, std::vector<int>& cycle) {
-		for (int e = graph[i].na; e != i; e = graph[e].na) {
-			int next = graph[e].ta;
+		bool res = true;
+		int v1, v2;
+		int s1, s2;
+		int a;
 
-			if ((graph[next].color != -1) && graph[next].color % 2 == graph[i].color % 2) {
-				clearColor();
-				cycle = dfs().cycle;
-				return false;
+		graph[i].color = 0;
+		graph[i].parent = i;
+		graph[i].link = -1;
+		graph[i].link2 = -1;
+
+		s1 = i;
+		s2 = i;
+
+		while (s1 != -1 || s2 != -1) {
+			if (s1 != -1) {
+				v1 = s1;
+				s1 = graph[s1].link;
+				a = graph[v1].na;
+				for (a = graph[v1].na; a != v1; a = graph[a].na) {
+					v2 = graph[a].ta;
+					if (v1 == v2) {
+						cycle.push_back(v1);
+						return false;
+					}
+					if (graph[v2].color == -1) {
+						graph[v2].parent = v1;
+						graph[v2].color = 1 - graph[v1].color;
+						graph[v2].link2 = s2;
+						s2 = v2;
+					} else if (graph[v1].color == graph[v2].color) {
+						saveCycle(v1, v2, cycle);
+						return false;
+					}
+				}
 			}
-
-			graph[next].color = std::max(graph[next].color, graph[i].color + 1);
+			else {
+				v1 = s2;
+				s2 = graph[s2].link2;
+				a = graph[v1].na;
+				for (a = graph[v1].na; a != v1; a = graph[a].na) {
+					v2 = graph[a].ta;
+					if (v1 == v2) {
+						cycle.push_back(v1);
+						return false;
+					}
+					if (graph[v2].color == -1) {
+						graph[v2].parent = v1;
+						graph[v2].color = 1 - graph[v1].color;
+						graph[v2].link = s1;
+						s1 = v2;
+					} else if (graph[v1].color == graph[v2].color) {
+						saveCycle(v1, v2, cycle);
+						return false;
+					}
+				}
+			}
 		}
-
 		return true;
 	}
 	
 	ColorResult Graph::dfs() {
-		int color = 0;
 		ColorResult res;
 
 		res.res = true;
@@ -167,7 +232,7 @@ namespace containers
 
 		graph[i].color = 0;
 		graph[i].parent = i;
-		graph[i].link = -1; //??
+		graph[i].link = -1;
 		s = i;
 
 		while (s != -1) {
@@ -177,6 +242,10 @@ namespace containers
 			
 			for (a = graph[v1].na; a != v1; a = graph[a].na) {
 				v2 = graph[a].ta;
+				if (v1 == v2) {
+					cycle.push_back(v1);
+					return false;
+				}
 				if (graph[v2].color == -1) {
 					graph[v2].parent = v1;
 					graph[v2].color = 1 - graph[v1].color;
@@ -185,12 +254,10 @@ namespace containers
 				} else if (graph[v1].color == graph[v2].color) {
 					while (v1 != graph[v2].parent) {
 						cycle.push_back(v1);
-						//std::cout << v1 << ' ';
 						v1 = graph[v1].parent;
 					}
 					cycle.push_back(v1);
 					cycle.push_back(v2);
-					//std::cout << v1 << ' ' << v2 << '\n';
 					return false;
 				}
 			}
@@ -198,9 +265,12 @@ namespace containers
 		return true;
 	}
 
-	void Graph::clearColor() {
+	void Graph::clearFields() {
 		for (auto& it : graph) {
 			it.color = -1;
+			it.link = -1;
+			it.link2 = -1;
+			it.parent = -1;
 		}
 	}
 
