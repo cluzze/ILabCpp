@@ -150,7 +150,7 @@ TEST(graph, hand_written4) {
 
 TEST(graph, generated1) {
     srand(time(NULL));
-    int size = 50;
+    int size = 500;
     vector<int> v1(size), v2(size);
 
     for (int i = 0; i < v1.size(); i++) {
@@ -197,7 +197,7 @@ TEST(graph, generated1) {
 
 TEST(graph, generated2) {
     srand(time(NULL));
-    int size = 7;
+    int size = 100;
     vector<int> v1(size), v2(size);
 
     for (int i = 0; i < v1.size(); i++) {
@@ -224,10 +224,8 @@ TEST(graph, generated2) {
     edges.push_back({1, 6});
 
     vector<vector<int>> graph(size * 2);
-    //std::ofstream file;
-    //file.open("../tests/test9.txt", std::ios::app);
+
     for (int i = 0; i < edges.size(); i++) {
-        //file << edges[i].first << " -- " << edges[i].second << ", 0\n";
         graph[edges[i].first - 1].push_back(edges[i].second - 1);
         graph[edges[i].second - 1].push_back(edges[i].first - 1);
     }
@@ -238,10 +236,10 @@ TEST(graph, generated2) {
     containers::ColorResult res2, res3;
 
     res1 = dfs(graph);
-    //res2 = mygraph.dfs();
-    //mygraph.clearFields();
+    res2 = mygraph.dfs();
+    mygraph.clearFields();
     res2.res = res1;
-    //res3 = mygraph.bfs();
+    res3 = mygraph.bfs();
     ASSERT_EQ(res1, res2.res);
     ASSERT_EQ(res2.res, res3.res);
 }
@@ -264,9 +262,9 @@ std::vector<std::pair<int, int>> generateBigBipartiteGraph(int numNodes1, int nu
 }
 
 TEST(graph, generated3) {
-    int numNodes1 = 3;
-    int numNodes2 = 3;
-    int numEdges = 3;
+    int numNodes1 = 30000;
+    int numNodes2 = 30000;
+    int numEdges = 30000;
 
     std::vector<std::pair<int, int>> bipartiteGraph = generateBigBipartiteGraph(numNodes1, numNodes2, numEdges);
 
@@ -308,8 +306,8 @@ std::vector<std::pair<int, int>> generateRandomGraph(int numNodes, float density
 }
 
 TEST(graph, generated4) {
-    int numNodes = 5;
-    float density = 0.3;
+    int numNodes = 5000;
+    float density = 0.05;
 
     std::vector<std::pair<int, int>> randomGraph = generateRandomGraph(numNodes, density);
 
