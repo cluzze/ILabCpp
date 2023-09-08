@@ -149,7 +149,7 @@ std::string genInput(int n) {
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(-values, values);
 
-    std::string result;
+    std::string result = "";
     for (int i = 0; i < n; ++i) {
         char letter;
         int number = dis(gen);
