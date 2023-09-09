@@ -198,10 +198,9 @@ namespace containers
 		s2 = -1;
 
 		while (s1 != -1 || s2 != -1) {
-			if ((s1 != -1)) {
-				if (!visitAdjacentNodes(s1, s2, cycle, 1, 2))
-					return false;
-			} else if (!visitAdjacentNodes(s1, s2, cycle, 2, 1)) {
+			if ((s1 != -1) && (!visitAdjacentNodes(s1, s2, cycle, 1, 2))) {
+				return false;
+			} else if ((s2 != -1) && !visitAdjacentNodes(s1, s2, cycle, 2, 1)) {
 				return false;
 			}
 		}

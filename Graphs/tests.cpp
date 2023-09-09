@@ -150,7 +150,7 @@ TEST(graph, hand_written4) {
 
 TEST(graph, generated1) {
     srand(time(NULL));
-    int size = 500;
+    int size = 50000;
     vector<int> v1(size), v2(size);
 
     for (int i = 0; i < v1.size(); i++) {
@@ -173,8 +173,10 @@ TEST(graph, generated1) {
         edges.push_back({v1[i], v2[e2]});
         edges.push_back({v1[i], v2[e3]});
     }
+    
+    edges.push_back({1, 50001});
 
-    vector<vector<int>> graph(size * 2);
+    vector<vector<int>> graph(size * 2 + 1);
 
     for (int i = 0; i < edges.size(); i++) {
         graph[edges[i].first - 1].push_back(edges[i].second - 1);
@@ -197,7 +199,7 @@ TEST(graph, generated1) {
 
 TEST(graph, generated2) {
     srand(time(NULL));
-    int size = 100;
+    int size = 10000;
     vector<int> v1(size), v2(size);
 
     for (int i = 0; i < v1.size(); i++) {
@@ -262,15 +264,16 @@ std::vector<std::pair<int, int>> generateBigBipartiteGraph(int numNodes1, int nu
 }
 
 TEST(graph, generated3) {
-    int numNodes1 = 30000;
-    int numNodes2 = 30000;
-    int numEdges = 30000;
+    int numNodes1 = 300000;
+    int numNodes2 = 300000;
+    int numEdges = 300000;
 
     std::vector<std::pair<int, int>> bipartiteGraph = generateBigBipartiteGraph(numNodes1, numNodes2, numEdges);
 
+    bipartiteGraph.push_back({12312, 12312});
     containers::Graph mygraph(bipartiteGraph.begin(), bipartiteGraph.end());
 
-    vector<vector<int>> graph(numNodes1 + numNodes2);
+    vector<vector<int>> graph(numNodes1 + numNodes2 + 1);
 
     for (int i = 0; i < bipartiteGraph.size(); i++) {
         graph[bipartiteGraph[i].first - 1].push_back(bipartiteGraph[i].second - 1);
