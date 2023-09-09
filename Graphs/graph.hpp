@@ -45,6 +45,8 @@ namespace containers
 		bool bfs_impl(int i, std::vector<int>& cycle);
 
 		void saveCycle(int v1, int v2, std::vector<int>& cycle);
+
+		bool visitAdjacentNodes(int& s1, int& s2, std::vector<int>& cycle, int pop, int push); 
 		struct EdgeInfo {
 			int ta, na, pa;
 			int color;
@@ -57,22 +59,22 @@ namespace containers
 		std::vector<EdgeInfo> graph;
 	};
 
-    void Graph::Unlink(int target) {
+	void Graph::Unlink(int target) {
 		int before = graph[target].pa;
 		int after = graph[target].na;
 		graph[before].na = after;
 		graph[after].pa = before;
-    }
+	}
 
-    void Graph::LinkBefore(int target, int before)
-    {
-        graph[before].na = target;
+	void Graph::LinkBefore(int target, int before)
+	{
+		graph[before].na = target;
 		graph[before].pa = graph[target].pa;
 		graph[graph[target].pa].na = before;
-    	graph[target].pa = before;
-    }
+		graph[target].pa = before;
+	}
 
-    template <typename It>
+	template <typename It>
 	Graph::Graph(It begin, It end) {
 		for (auto it = begin; it != end; ++it) {
 			v = std::max({v, it->first, it->second});
@@ -82,7 +84,7 @@ namespace containers
 
 		for (int i = 0; i < v; i++) {
 			graph[i].na = i;
-        	graph[i].pa = i;
+			graph[i].pa = i;
 		}
 		
 		for (auto it = begin; it != end; ++it) {
@@ -134,6 +136,41 @@ namespace containers
 		}
 	}
 
+	bool Graph::visitAdjacentNodes(int& s1, int& s2, std::vector<int>& cycle, int pop, int push) {
+		int v1;
+		if (pop == 1) {
+			v1 = s1;
+			s1 = graph[s1].link;
+		} else {
+			v1 = s2;
+			s2 = graph[s2].link2;
+		}
+
+		int a = graph[v1].na;
+		for (a = graph[v1].na; a != v1; a = graph[a].na) {
+			int v2 = graph[a].ta;
+			if (v1 == v2) {
+				cycle.push_back(v1);
+				return false;
+			}
+			if (graph[v2].color == -1) {
+				graph[v2].parent = v1;
+				graph[v2].color = 1 - graph[v1].color;
+				if (push == 1) {
+					graph[v2].link = s1;
+					s1 = v2;
+				} else {
+					graph[v2].link2 = s2;
+					s2 = v2;
+				}
+			} else if (graph[v1].color == graph[v2].color) {
+				saveCycle(v1, v2, cycle);
+				return false;
+			}
+		}
+		return true;
+	}
+
 	ColorResult Graph::bfs() {
 		ColorResult res;
 
@@ -150,9 +187,7 @@ namespace containers
 
 	bool Graph::bfs_impl(int i, std::vector<int>& cycle) {
 		bool res = true;
-		int v1, v2;
 		int s1, s2;
-		int a;
 
 		graph[i].color = 0;
 		graph[i].parent = i;
@@ -160,52 +195,17 @@ namespace containers
 		graph[i].link2 = -1;
 
 		s1 = i;
-		s2 = i;
+		s2 = -1;
 
 		while (s1 != -1 || s2 != -1) {
-			if (s1 != -1) {
-				v1 = s1;
-				s1 = graph[s1].link;
-				a = graph[v1].na;
-				for (a = graph[v1].na; a != v1; a = graph[a].na) {
-					v2 = graph[a].ta;
-					if (v1 == v2) {
-						cycle.push_back(v1);
-						return false;
-					}
-					if (graph[v2].color == -1) {
-						graph[v2].parent = v1;
-						graph[v2].color = 1 - graph[v1].color;
-						graph[v2].link2 = s2;
-						s2 = v2;
-					} else if (graph[v1].color == graph[v2].color) {
-						saveCycle(v1, v2, cycle);
-						return false;
-					}
-				}
-			}
-			else {
-				v1 = s2;
-				s2 = graph[s2].link2;
-				a = graph[v1].na;
-				for (a = graph[v1].na; a != v1; a = graph[a].na) {
-					v2 = graph[a].ta;
-					if (v1 == v2) {
-						cycle.push_back(v1);
-						return false;
-					}
-					if (graph[v2].color == -1) {
-						graph[v2].parent = v1;
-						graph[v2].color = 1 - graph[v1].color;
-						graph[v2].link = s1;
-						s1 = v2;
-					} else if (graph[v1].color == graph[v2].color) {
-						saveCycle(v1, v2, cycle);
-						return false;
-					}
-				}
+			if ((s1 != -1)) {
+				if (!visitAdjacentNodes(s1, s2, cycle, 1, 2))
+					return false;
+			} else if (!visitAdjacentNodes(s1, s2, cycle, 2, 1)) {
+				return false;
 			}
 		}
+
 		return true;
 	}
 	
@@ -226,42 +226,17 @@ namespace containers
 
 	bool Graph::dfs_impl(int i, std::vector<int>& cycle) {
 		bool res = true;
-		int v1, v2;
 		int s;
-		int a;
 
 		graph[i].color = 0;
 		graph[i].parent = i;
 		graph[i].link = -1;
 		s = i;
 
-		while (s != -1) {
-			v1 = s;
-			s = graph[s].link;
-			a = graph[v1].na;
-			
-			for (a = graph[v1].na; a != v1; a = graph[a].na) {
-				v2 = graph[a].ta;
-				if (v1 == v2) {
-					cycle.push_back(v1);
-					return false;
-				}
-				if (graph[v2].color == -1) {
-					graph[v2].parent = v1;
-					graph[v2].color = 1 - graph[v1].color;
-					graph[v2].link = s;
-					s = v2;
-				} else if (graph[v1].color == graph[v2].color) {
-					while (v1 != graph[v2].parent) {
-						cycle.push_back(v1);
-						v1 = graph[v1].parent;
-					}
-					cycle.push_back(v1);
-					cycle.push_back(v2);
-					return false;
-				}
-			}
-		}
+		while (s != -1)
+			if (!visitAdjacentNodes(s, s, cycle, 1, 1))
+				return false;
+
 		return true;
 	}
 

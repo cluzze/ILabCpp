@@ -40,7 +40,6 @@ int main() {
 
 	Graph g(edges.begin(), edges.end());
 	ColorResult color = g.bfs();
-	//g.dump();
 	if (color.res)
 		g.printColor();
 	else {
