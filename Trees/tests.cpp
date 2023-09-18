@@ -176,3 +176,17 @@ TEST(trees, e2e_gen) {
     std::string input = genInput(10);
     solve(input);
 }
+
+struct A {
+    int x, y;
+};
+
+struct CompA {
+    bool operator()(const A& a, const A&b) {
+        return a.x < b.x;
+    }
+};
+
+TEST(constructor, non_trivial_class) {
+    SearchTree<A, CompA> t;
+}

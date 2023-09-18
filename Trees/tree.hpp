@@ -61,7 +61,7 @@ namespace containers
     };
 
     template <typename KeyT, typename Comp>
-    SearchTree<KeyT, Comp>::SearchTree() : nil_{new TreeNode{0, 0, Color::Black, nullptr, nullptr, nullptr}}, root_{nil_} {
+    SearchTree<KeyT, Comp>::SearchTree() : nil_{new TreeNode{KeyT{}, 0, Color::Black, nullptr, nullptr, nullptr}}, root_{nil_} {
         nil_->p = nil_;
         nil_->left = nil_;
         nil_->right = nil_;
