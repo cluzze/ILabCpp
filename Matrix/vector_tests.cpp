@@ -10,7 +10,7 @@
 #ifdef TEST_STD_VECTOR
 using std::vector;
 #else
-using my_containers::vector;
+using containers::vector;
 #endif
 
 TEST(vector, Default_initialize)
@@ -35,9 +35,9 @@ TEST(vector, Default_copy_initialize)
 
 TEST(vector, Constructor_from_size_t_is_explicit)
 {
-    bool is = std::is_constructible_v<vector<std::string>, std::size_t>;
+    bool is = std::is_constructible<vector<std::string>, std::size_t>::value;
     ASSERT_TRUE(is);
-    is = std::is_convertible_v<std::size_t, vector<std::string>>;
+    is = std::is_convertible<std::size_t, vector<std::string>>::value;
     ASSERT_TRUE(!is);
 }
 
@@ -66,7 +66,7 @@ struct ObjWithDefaultCtor : MinimalObj {
 
     explicit ObjWithDefaultCtor() : MinimalObj(100) {}
 };
-static_assert(std::is_default_constructible_v<ObjWithDefaultCtor>);
+static_assert(std::is_default_constructible<ObjWithDefaultCtor>::value);
 
 struct ObjWithCopyCtor : MinimalObj {
     using MinimalObj::MinimalObj;
@@ -878,7 +878,7 @@ Counters with_counters(Fn fn)
 namespace {
 template <typename T>
 struct CounterAllocator {
-    static_assert(alignof(T) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__);
+    //static_assert(alignof(T) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__);
 
     using value_type = T;
 

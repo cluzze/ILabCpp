@@ -8,14 +8,16 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <iterator>
+#include <compare>
 
 namespace containers {
     template <typename T, typename Alloc = std::allocator<T>>
     class vectorBuf {
     protected:
-        static_assert(std::is_nothrow_move_constructible_v<T>);
-        static_assert(std::is_nothrow_move_assignable_v<T>);
-        static_assert(std::is_nothrow_destructible_v<T>);
+        static_assert(std::is_nothrow_move_constructible<T>::value);
+        static_assert(std::is_nothrow_move_assignable<T>::value);
+        static_assert(std::is_nothrow_destructible<T>::value);
 
         vectorBuf(const vectorBuf& rhs) = delete;
         vectorBuf& operator=(const vectorBuf& rhs) = delete;
@@ -51,13 +53,152 @@ namespace containers {
 
     template <typename T, typename Alloc = std::allocator<T>>
     class vector : private vectorBuf<T, Alloc> {
-        static_assert(std::is_nothrow_move_constructible_v<T>);
-        static_assert(std::is_nothrow_move_assignable_v<T>);
-        static_assert(std::is_nothrow_destructible_v<T>);
+        static_assert(std::is_nothrow_move_constructible<T>::value);
+        static_assert(std::is_nothrow_move_assignable<T>::value);
+        static_assert(std::is_nothrow_destructible<T>::value);
 
         using vectorBuf<T, Alloc>::capacity_;
         using vectorBuf<T, Alloc>::size_;
         using vectorBuf<T, Alloc>::arr;
+    public:
+        class iterator {
+        public:
+            using iterator_category = std::contiguous_iterator_tag;
+            using difference_type = std::ptrdiff_t;
+            using value_type = T;
+            using reference_type = T&;
+            using pointer_type = T*;
+        
+        private:
+            pointer_type ptr;
+
+        public:
+            iterator(pointer_type ptr_ = nullptr) : ptr{ptr_} {}
+
+            pointer_type   operator->() const { return ptr; }
+            reference_type operator*() const { return *ptr; }
+            reference_type operator[](difference_type dif) const { return *(ptr + dif); }
+
+            iterator& operator++() {
+                ptr++;
+                return *this;
+            }
+
+            iterator operator++(int) {
+                iterator tmp(ptr);
+                ptr++;
+                return tmp;
+            }
+
+            iterator& operator+=(difference_type dif) {
+                ptr += dif;
+                return *this;
+            }
+
+            iterator& operator--() {
+                ptr--;
+                return *this;
+            }
+
+            iterator operator--(int) {
+                iterator tmp(ptr);
+                ptr--;
+                return tmp;
+            }
+
+            iterator& operator-=(difference_type dif) {
+                ptr -= dif;
+                return *this;
+            }
+
+            iterator operator-(difference_type dif) const {
+                return iterator{ptr - dif};
+            }
+
+            difference_type operator-(const iterator& other) const {
+                return ptr - other.ptr;
+            }
+
+            auto operator<=>(const iterator&) const = default;
+
+            friend iterator operator+(const iterator& it, difference_type dif) {
+                return iterator{it.ptr + dif};
+            }
+
+            friend iterator operator+(difference_type dif, const iterator& it) {
+                return iterator{it.ptr + dif};
+            }
+        };
+
+        class const_iterator {
+        public:
+            using iterator_category = std::contiguous_iterator_tag;
+            using difference_type = std::ptrdiff_t;
+            using value_type = const T;
+            using reference_type = const T&;
+            using pointer_type = const T*;
+        
+        private:
+            pointer_type ptr;
+
+        public:
+            const_iterator(pointer_type ptr_ = nullptr) : ptr{ptr_} {}
+
+            pointer_type   operator->() const { return ptr; }
+            reference_type operator*() const { return *ptr; }
+            reference_type operator[](difference_type dif) const { return *(ptr + dif); }
+
+            const_iterator& operator++() {
+                ptr++;
+                return *this;
+            }
+
+            const_iterator operator++(int) {
+                const_iterator tmp(ptr);
+                ptr++;
+                return tmp;
+            }
+
+            const_iterator& operator+=(difference_type dif) {
+                ptr += dif;
+                return *this;
+            }
+
+            const_iterator& operator--() {
+                ptr--;
+                return *this;
+            }
+
+            const_iterator operator--(int) {
+                const_iterator tmp(ptr);
+                ptr--;
+                return tmp;
+            }
+
+            const_iterator& operator-=(difference_type dif) {
+                ptr -= dif;
+                return *this;
+            }
+
+            const_iterator operator-(difference_type dif) const {
+                return const_iterator{ptr - dif};
+            }
+
+            difference_type operator-(const const_iterator& other) const {
+                return ptr - other.ptr;
+            }
+
+            auto operator<=>(const const_iterator& other) const = default;
+
+            friend const_iterator operator+(const const_iterator& it, difference_type dif) {
+                return const_iterator{it.ptr + dif};
+            }
+
+            friend const_iterator operator+(difference_type dif, const const_iterator& it) {
+                return const_iterator{it.ptr + dif};
+            }
+        };    
+
     public:
         vector() : vectorBuf<T, Alloc>{0} {}
         
@@ -86,15 +227,8 @@ namespace containers {
         }
 
         vector &operator=(vector &&other) noexcept {
-            if (this == &other)
+            if (this == std::addressof(other))
                 return *this;
-
-            if (capacity_ != 0) {
-                for (std::size_t i = 0; i < size_; i++) {
-                    arr[i].~T();
-                }
-                Alloc().deallocate(arr, capacity_);
-            }
 
             std::swap(capacity_, other.capacity_);
             arr = std::exchange(other.arr, nullptr);
@@ -104,8 +238,7 @@ namespace containers {
         }
 
         vector &operator=(const vector &rhs) {
-            if (this != &rhs)
-            {
+            if (this != &rhs) {
                 vector tmp(rhs);
                 std::swap(*this, tmp);       
             }
@@ -138,21 +271,21 @@ namespace containers {
 
         T &at(std::size_t n) & {
             if (n >= size_) {
-                throw std::out_of_range("123");
+                throw std::out_of_range("out of range");
             }
             return arr[n];
         }
 
         T &&at(std::size_t n) && {
             if (n >= size_) {
-                throw std::out_of_range("123");
+                throw std::out_of_range("out of range");
             }
             return std::move(arr[n]);
         }
 
         const T &at(std::size_t n) const & {
             if (n >= size_) {
-                throw std::out_of_range("123");
+                throw std::out_of_range("out of range");
             }
             return arr[n];
         }
@@ -281,6 +414,22 @@ namespace containers {
         void clear() &noexcept {
             del(0, size_, arr);
             size_ = 0;
+        }
+
+        iterator begin() const {
+            return iterator{arr};
+        }
+
+        iterator end() const {
+            return iterator{arr + size};
+        }
+
+        const_iterator const begin() {
+            return iterator{arr};
+        }
+
+        const_iterator const end() {
+            return iterator{arr + size};
         }
 
     private:
