@@ -12,7 +12,7 @@
 #include <compare>
 
 namespace containers {
-    template <typename T, typename Alloc = std::allocator<T>>
+    template <typename T, typename Allocator = std::allocator<T>>
     class vectorBuf {
     protected:
         static_assert(std::is_nothrow_move_constructible<T>::value);
@@ -35,13 +35,13 @@ namespace containers {
 
         explicit vectorBuf(std::size_t capacity) :
                 capacity_{capacity}, arr{capacity_ == 0 ? nullptr 
-                                    : Alloc().allocate(capacity_)} {}
+                                    : Allocator().allocate(capacity_)} {}
 
         ~vectorBuf() {
             if (arr) {
                 for (std::size_t i = 0; i < size_; ++i)
                     arr[i].~T();
-                Alloc().deallocate(arr, capacity_);
+                Allocator().deallocate(arr, capacity_);
             }
         }
 
@@ -51,15 +51,25 @@ namespace containers {
         T* arr;
     };
 
-    template <typename T, typename Alloc = std::allocator<T>>
-    class vector : private vectorBuf<T, Alloc> {
+    template <typename T, typename Allocator = std::allocator<T>>
+    class vector : private vectorBuf<T, Allocator> {
         static_assert(std::is_nothrow_move_constructible<T>::value);
         static_assert(std::is_nothrow_move_assignable<T>::value);
         static_assert(std::is_nothrow_destructible<T>::value);
 
-        using vectorBuf<T, Alloc>::capacity_;
-        using vectorBuf<T, Alloc>::size_;
-        using vectorBuf<T, Alloc>::arr;
+        using vectorBuf<T, Allocator>::capacity_;
+        using vectorBuf<T, Allocator>::size_;
+        using vectorBuf<T, Allocator>::arr;
+    public:
+        using value_type = T;
+        using allocator_type = Allocator;
+        using pointer = typename std::allocator_traits<Allocator>::pointer;
+        using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
+        using reference = value_type&;
+        using const_reference = const value_type&;
+        using size_type = typename std::allocator_traits<Allocator>::size_type;
+        using difference_type = typename std::allocator_traits<Allocator>::difference_type;
+    
     public:
         class iterator {
         public:
@@ -200,30 +210,30 @@ namespace containers {
         };    
 
     public:
-        vector() : vectorBuf<T, Alloc>{0} {}
+        vector() : vectorBuf<T, Allocator>{0} {}
         
-        vector(size_t n, const T &value) : vectorBuf<T, Alloc>(new_cap(n)) {
+        vector(size_t n, const T &value) : vectorBuf<T, Allocator>(new_cap(n)) {
             for (std::size_t i = 0; i < n; i++) {
                 new (arr + i) T{value};
                 size_++;
             }
         }
 
-        explicit vector(std::size_t n) : vectorBuf<T, Alloc>(new_cap(n)) {
+        explicit vector(std::size_t n) : vectorBuf<T, Allocator>(new_cap(n)) {
             for (std::size_t i = 0; i < n; i++) {
                 new (arr + i) T{};
                 size_++;
             }
         }
 
-        vector(const vector &rhs) : vectorBuf<T, Alloc>(new_cap(rhs.size_)) {
+        vector(const vector &rhs) : vectorBuf<T, Allocator>(new_cap(rhs.size_)) {
             for (std::size_t i = 0; i < rhs.size_; i++) {
                 new (arr + i) T(rhs.arr[i]);
                 size_++;
             }
         }
 
-        vector(vector &&rhs) noexcept : vectorBuf<T, Alloc>(std::move(rhs)) {
+        vector(vector &&rhs) noexcept : vectorBuf<T, Allocator>(std::move(rhs)) {
         }
 
         vector &operator=(vector &&other) noexcept {
@@ -301,11 +311,11 @@ namespace containers {
                     }
                     std::swap(arr, buf);
                     del(0, size_, buf);
-                    Alloc().deallocate(buf, capacity_);
+                    Allocator().deallocate(buf, capacity_);
                     capacity_ = new_capacity;
                 } catch (...) {
                     del(0, i, buf);
-                    Alloc().deallocate(buf, new_capacity);
+                    Allocator().deallocate(buf, new_capacity);
                     throw;
                 }
             }
@@ -332,12 +342,12 @@ namespace containers {
                         for (; i < size_; i++) {
                             new (buf + i) T(std::move(arr[i]));
                         }
-                        Alloc().deallocate(arr, capacity_);
+                        Allocator().deallocate(arr, capacity_);
                         arr = buf;
                         capacity_ = new_capacity_;
                     } catch (...) {
                         del(0, i, buf);
-                        Alloc().deallocate(buf, new_capacity_);
+                        Allocator().deallocate(buf, new_capacity_);
                         throw;
                     }
                 }
@@ -369,12 +379,12 @@ namespace containers {
                     }
                     std::swap(arr, buf);
                     del(0, size_, buf);
-                    Alloc().deallocate(buf, capacity_);
+                    Allocator().deallocate(buf, capacity_);
                     capacity_ = new_capacity;
                     size_ = n;
                 } catch (...) {
                     del(size_, i, buf);
-                    Alloc().deallocate(buf, new_capacity);
+                    Allocator().deallocate(buf, new_capacity);
                     throw;
                 }
             } else if (size_ > n) {
@@ -397,12 +407,12 @@ namespace containers {
                     }
                     std::swap(arr, buf);
                     del(0, size_, buf);
-                    Alloc().deallocate(buf, capacity_);
+                    Allocator().deallocate(buf, capacity_);
                     capacity_ = new_capacity;
                     size_ = n;
                 } catch (...) {
                     del(size_, i, buf);
-                    Alloc().deallocate(buf, new_capacity);
+                    Allocator().deallocate(buf, new_capacity);
                     throw;
                 }
             } else if (size_ > n) {
@@ -454,7 +464,7 @@ namespace containers {
             if (n == 0) {
                 return nullptr;
             }
-            return Alloc().allocate(n);
+            return Allocator().allocate(n);
         }
     };
 }
