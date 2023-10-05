@@ -212,22 +212,22 @@ namespace containers {
     public:
         vector() : vectorBuf<T, Allocator>{0} {}
         
-        vector(size_t n, const T &value) : vectorBuf<T, Allocator>(new_cap(n)) {
-            for (std::size_t i = 0; i < n; i++) {
+        vector(size_type n, const T &value) : vectorBuf<T, Allocator>(new_cap(n)) {
+            for (size_type i = 0; i < n; i++) {
                 new (arr + i) T{value};
                 size_++;
             }
         }
 
-        explicit vector(std::size_t n) : vectorBuf<T, Allocator>(new_cap(n)) {
-            for (std::size_t i = 0; i < n; i++) {
+        explicit vector(size_type n) : vectorBuf<T, Allocator>(new_cap(n)) {
+            for (size_type i = 0; i < n; i++) {
                 new (arr + i) T{};
                 size_++;
             }
         }
 
         vector(const vector &rhs) : vectorBuf<T, Allocator>(new_cap(rhs.size_)) {
-            for (std::size_t i = 0; i < rhs.size_; i++) {
+            for (size_type i = 0; i < rhs.size_; i++) {
                 new (arr + i) T(rhs.arr[i]);
                 size_++;
             }
@@ -236,26 +236,28 @@ namespace containers {
         vector(vector &&rhs) noexcept : vectorBuf<T, Allocator>(std::move(rhs)) {
         }
 
-        vector &operator=(vector &&other) noexcept {
-            if (this == std::addressof(other))
+        vector &operator=(vector &&rhs) noexcept {
+            if (this == std::addressof(rhs))
                 return *this;
 
-            std::swap(capacity_, other.capacity_);
-            arr = std::exchange(other.arr, nullptr);
-            size_ = std::exchange(other.size_, 0);
+            std::swap(capacity_, rhs.capacity_);
+            arr = std::exchange(rhs.arr, nullptr);
+            size_ = std::exchange(rhs.size_, 0);
             
             return *this;
         }
 
         vector &operator=(const vector &rhs) {
-            if (this != &rhs) {
-                vector tmp(rhs);
-                std::swap(*this, tmp);       
-            }
+            if (this == std::addressof(rhs))
+                return *this;
+
+            vector tmp(rhs);
+            std::swap(*this, tmp);       
+
             return *this;
         }
 
-        [[nodiscard]] std::size_t size() const noexcept {
+        [[nodiscard]] size_type size() const noexcept {
             return size_;
         }
 
@@ -263,61 +265,62 @@ namespace containers {
             return size_ == 0;
         }
 
-        [[nodiscard]] std::size_t capacity() const noexcept {
+        [[nodiscard]] size_type capacity() const noexcept {
             return capacity_;
         }
 
-        T &operator[](std::size_t n) &noexcept {
+        T &operator[](size_type n) &noexcept {
             return arr[n];
         }
 
-        T &&operator[](std::size_t n) &&noexcept {
+        T &&operator[](size_type n) &&noexcept {
             return std::move(arr[n]);
         }
 
-        const T &operator[](std::size_t n) const &noexcept {
+        const T &operator[](size_type n) const &noexcept {
             return arr[n];
         }
 
-        T &at(std::size_t n) & {
+        T &at(size_type n) & {
             if (n >= size_) {
                 throw std::out_of_range("out of range");
             }
             return arr[n];
         }
 
-        T &&at(std::size_t n) && {
+        T &&at(size_type n) && {
             if (n >= size_) {
                 throw std::out_of_range("out of range");
             }
             return std::move(arr[n]);
         }
 
-        const T &at(std::size_t n) const & {
+        const T &at(size_type n) const & {
             if (n >= size_) {
                 throw std::out_of_range("out of range");
             }
             return arr[n];
         }
 
-        void reserve(std::size_t n) & {
-            if (capacity_ < n) {
-                std::size_t new_capacity = new_cap(n);
-                T *buf = All(new_capacity);
-                std::size_t i = 0;
-                try {
-                    for (; i != size_; i++) {
-                        new (buf + i) T(std::move(arr[i]));
-                    }
-                    std::swap(arr, buf);
-                    del(0, size_, buf);
-                    Allocator().deallocate(buf, capacity_);
-                    capacity_ = new_capacity;
-                } catch (...) {
-                    del(0, i, buf);
-                    Allocator().deallocate(buf, new_capacity);
-                    throw;
+        void reserve(size_type n) & {
+            if (capacity_ >= n)
+                return;
+            
+            size_type new_capacity = new_cap(n);
+            T *buf = All(new_capacity);
+            size_type i = 0;
+            try {
+                for (; i != size_; i++) {
+                    new (buf + i) T(std::move(arr[i]));
                 }
+                std::swap(arr, buf);
+                del(0, size_, buf);
+                Allocator().deallocate(buf, capacity_);
+                capacity_ = new_capacity;
+            } catch (...) {
+                del(0, i, buf);
+                Allocator().deallocate(buf, new_capacity);
+                throw;
             }
         }
 
@@ -331,25 +334,20 @@ namespace containers {
 
         void push_back(T &&value) & {
             if (size_ == capacity_) {
-                if (capacity_ == 0) {
-                    capacity_ = 2;
-                    arr = All(capacity_);
-                } else {
-                    std::size_t new_capacity_ = capacity_ * 2;
-                    T *buf = All(new_capacity_);
-                    std::size_t i = 0;
-                    try {
-                        for (; i < size_; i++) {
-                            new (buf + i) T(std::move(arr[i]));
-                        }
-                        Allocator().deallocate(arr, capacity_);
-                        arr = buf;
-                        capacity_ = new_capacity_;
-                    } catch (...) {
-                        del(0, i, buf);
-                        Allocator().deallocate(buf, new_capacity_);
-                        throw;
+                size_type new_capacity_ = capacity_ != 0 ? capacity_ * 2 : 2;
+                T *buf = All(new_capacity_);
+                size_type i = 0;
+                try {
+                    for (; i < size_; i++) {
+                        new (buf + i) T(std::move(arr[i]));
                     }
+                    Allocator().deallocate(arr, capacity_);
+                    arr = buf;
+                    capacity_ = new_capacity_;
+                } catch (...) {
+                    del(0, i, buf);
+                    Allocator().deallocate(buf, new_capacity_);
+                    throw;
                 }
             }
             try {
@@ -365,16 +363,16 @@ namespace containers {
             arr[size_].~T();
         }
 
-        void resize(std::size_t n) & {
+        void resize(size_type n) & {
             if (size_ < n) {
-                std::size_t new_capacity = new_cap(n);
+                size_type new_capacity = new_cap(n);
                 T *buf = All(new_capacity);
-                std::size_t i = size_;
+                size_type i = size_;
                 try {
                     for (; i != n; i++) {
-                        new (buf + i) T();
+                        new (buf + i) T{};
                     }
-                    for (std::size_t j = 0; j < size_; j++) {
+                    for (size_type j = 0; j < size_; j++) {
                         new (buf + j) T(std::move(arr[j]));
                     }
                     std::swap(arr, buf);
@@ -393,16 +391,16 @@ namespace containers {
             }
         }
 
-        void resize(std::size_t n, const T &value) & {
+        void resize(size_type n, const T &value) & {
             if (size_ < n) {
-                std::size_t new_capacity = new_cap(n);
+                size_type new_capacity = new_cap(n);
                 T *buf = All(new_capacity);
-                std::size_t i = size_;
+                size_type i = size_;
                 try {
                     for (; i != n; i++) {
-                        new (buf + i) T(value);
+                        new (buf + i) T{value};
                     }
-                    for (std::size_t j = 0; j < size_; j++) {
+                    for (size_type j = 0; j < size_; j++) {
                         new (buf + j) T(std::move(arr[j]));
                     }
                     std::swap(arr, buf);
@@ -426,41 +424,47 @@ namespace containers {
             size_ = 0;
         }
 
-        iterator begin() const {
-            return iterator{arr};
+        iterator begin() {
+            return iterator(arr);
         }
 
-        iterator end() const {
-            return iterator{arr + size};
+        iterator end() {
+            return iterator(arr + size_);
         }
 
-        const_iterator const begin() {
-            return iterator{arr};
+        const_iterator begin() const {
+            return const_iterator(arr);
         }
 
-        const_iterator const end() {
-            return iterator{arr + size};
+        const_iterator end() const {
+            return const_iterator(arr + size_);
+        }
+
+        template <typename It>
+        vector(It begin, It end) : vectorBuf<T, Allocator>(1) {
+            for (; begin != end; ++begin)
+                push_back(*begin);
         }
 
     private:
-        std::size_t new_cap(std::size_t x) noexcept {
+        size_type new_cap(size_type x) noexcept {
             if (x == 0)
                 return 0;
 
-            std::size_t y = 1;
+            size_type y = 1;
 
             while (y < x)
                 y *= 2;
             return y;
         }
 
-        void del(std::size_t i, std::size_t j, T *buf) noexcept {
-            for (std::size_t k = i; k < j; k++) {
+        void del(size_type i, size_type j, T *buf) noexcept {
+            for (size_type k = i; k < j; k++) {
                 buf[k].~T();
             }
         }
 
-        T* All(std::size_t n) {
+        T* All(size_type n) {
             if (n == 0) {
                 return nullptr;
             }

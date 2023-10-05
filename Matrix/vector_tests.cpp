@@ -6,6 +6,8 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <algorithm>
+#include <numeric>
 
 #ifdef TEST_STD_VECTOR
 using std::vector;
@@ -917,4 +919,18 @@ TEST(vector, custom_allocator_is_used_by_vector_string)
     ASSERT_TRUE(res.new_total_elems == 16);
     ASSERT_TRUE(res.delete_total_elems == 16);
 #endif
+}
+
+TEST(vector, vector_iterators) {
+    vector<int> v(10);
+    std::iota(v.begin(), v.end(), 1);
+    using It = vector<int>::iterator;
+
+    auto f1 = std::find(v.begin(), v.end(), 4);
+    auto f2 = std::find(v.begin(), v.end(), 11);
+    auto f3 = std::find(v.begin(), v.end(), 1);
+ 
+    ASSERT_EQ(f1, v.begin() + 3);
+    ASSERT_EQ(f2, v.end());
+    ASSERT_EQ(f3, v.begin());
 }
