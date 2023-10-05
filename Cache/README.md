@@ -1,4 +1,4 @@
-Graphs
+Cache
 ===
 Implementation of 2Q cache
 
