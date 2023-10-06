@@ -269,15 +269,15 @@ namespace containers {
             return capacity_;
         }
 
-        T &operator[](size_type n) &noexcept {
+        T &operator[](size_type n) & {
             return arr[n];
         }
 
-        T &&operator[](size_type n) &&noexcept {
+        T &&operator[](size_type n) && {
             return std::move(arr[n]);
         }
 
-        const T &operator[](size_type n) const &noexcept {
+        const T &operator[](size_type n) const & {
             return arr[n];
         }
 

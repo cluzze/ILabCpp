@@ -177,3 +177,19 @@ TEST(matrix, det_gen1) {
     long long mdet = m.determinant();
     ASSERT_EQ(mdet, det);
 }
+
+TEST(matrix, det_gen2) {
+    size_t size = 100;
+    std::vector<std::vector<long long>> matrix = generateMatrix(size);
+    //long long det = calculateDeterminant(matrix);
+    std::vector<long long> matrix2(size * size);
+
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            matrix2[i * size + j] = matrix[i][j];
+        }
+    }
+    LinAl::Matrix<long long> m(size, size, matrix2.begin(), matrix2.end());
+    long long mdet = m.determinant();
+    //ASSERT_EQ(mdet, det);
+}
