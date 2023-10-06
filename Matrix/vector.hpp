@@ -241,8 +241,8 @@ namespace containers {
                 return *this;
 
             std::swap(capacity_, rhs.capacity_);
-            arr = std::exchange(rhs.arr, nullptr);
-            size_ = std::exchange(rhs.size_, 0);
+            std::swap(arr, rhs.arr);
+            std::swap(size_, rhs.size_);
             
             return *this;
         }
