@@ -44,6 +44,7 @@ namespace geometry
 	point3_t operator/(const point3_t& a, double x) {
 		return {a[0] / x, a[1] / x, a[2] / x};
 	}
+	
 
 	struct bounding_box_t {
 	private:
@@ -71,7 +72,7 @@ namespace geometry
 			point3_t other_min = other.get_min();
 			point3_t other_max = other.get_max();
 
-			return ((max[0] < other_min[0]) &&
+			return ((max[0] < other_max[0]) &&
 					(max[1] < other_max[1]) &&
 					(max[2] < other_max[2]) &&
 					(min[0] > other_min[0]) &&
