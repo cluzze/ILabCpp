@@ -46,12 +46,7 @@ namespace LinAl
             int sign = 1;
 
             for (size_type k = 0; k < rows_; ++k) {
-                std::pair<size_type, value_type> pivot;
-                if constexpr (std::is_floating_point<T>::value) {
-                    pivot = find_pivot(k, k);
-                } else {
-                    pivot = findFirstNonZeroInColumn(k, k);
-                }
+                std::pair<size_type, value_type> pivot = find_pivot(k, k);
 
                 if (pivot.second == T{})
                     return 0;
@@ -77,8 +72,8 @@ namespace LinAl
                     }
 
                 }
-                std::cout << '\n';
-                print();
+                // std::cout << '\n';
+                //print();
             }
 
             return sign;
@@ -92,7 +87,7 @@ namespace LinAl
             }
         }
 
-        value_type determinant() const requires (std::is_floating_point<T>::value) {
+        value_type determinant() const requires std::is_floating_point<T>::value {
             if (!isSquare())
                 throw std::runtime_error("Non square matrix asking for its determinent :(");
 
@@ -112,8 +107,8 @@ namespace LinAl
             return det;
         }
         
-        value_type bareiss_det() requires (!std::is_floating_point<T>::value) {
-            int sign = 1;
+        value_type bareiss_det() requires std::is_integral<T>::value {
+            value_type sign = 1;
 
             for (size_type k = 0; k < rows_ - 1; ++k) {
                 auto pivot = findFirstNonZeroInColumn(k, k);
@@ -135,11 +130,10 @@ namespace LinAl
                     }
                 }
             }
-
             return sign * m2[rows_ - 1][rows_ - 1];
         }
 
-        value_type determinant() const requires (!std::is_floating_point<T>::value) {
+        value_type determinant() const requires std::is_integral<T>::value {
             if (!isSquare())
                 throw std::runtime_error("Non square matrix asking for its determinent :(");
 

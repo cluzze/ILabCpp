@@ -118,7 +118,7 @@ TEST(matrix, gen1) {
     ASSERT_EQ(det, res);
 }
 
-int calculateDeterminant(const std::vector<std::vector<long long>>& matrix) {
+int calculateDeterminant(const std::vector<std::vector<int>>& matrix) {
     int size = matrix.size();
 
     if (size == 2) {
@@ -128,7 +128,7 @@ int calculateDeterminant(const std::vector<std::vector<long long>>& matrix) {
     int determinant = 0;
 
     for (int col = 0; col < size; ++col) {
-        std::vector<std::vector<long long>> submatrix(size - 1, std::vector<long long>(size - 1, 0));
+        std::vector<std::vector<int>> submatrix(size - 1, std::vector<int>(size - 1, 0));
 
         for (int subRow = 1; subRow < size; ++subRow) {
             int subCol = 0;
@@ -147,12 +147,12 @@ int calculateDeterminant(const std::vector<std::vector<long long>>& matrix) {
     return determinant;
 }
 
-std::vector<std::vector<long long>> generateMatrix(int size) {
-    std::vector<std::vector<long long>> matrix(size, std::vector<long long>(size, 0));
+std::vector<std::vector<int>> generateMatrix(int size) {
+    std::vector<std::vector<int>> matrix(size, std::vector<int>(size, 0));
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<long long> dist(-10, 10);
+    std::uniform_int_distribution<int> dist(-10, 10);
 
     for (int row = 0; row < size; ++row) {
         for (int col = 0; col < size; ++col) {
@@ -164,32 +164,89 @@ std::vector<std::vector<long long>> generateMatrix(int size) {
 }
 
 TEST(matrix, det_gen1) {
-    std::vector<std::vector<long long>> matrix = generateMatrix(5);
-    long long det = calculateDeterminant(matrix);
-    std::vector<long long> matrix2(5 * 5);
+    std::vector<std::vector<int>> matrix = generateMatrix(5);
+    int det = calculateDeterminant(matrix);
+    std::vector<int> matrix2(5 * 5);
 
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             matrix2[i * 5 + j] = matrix[i][j];
         }
     }
-    LinAl::Matrix<long long> m(5, 5, matrix2.begin(), matrix2.end());
-    long long mdet = m.determinant();
+    LinAl::Matrix<int> m(5, 5, matrix2.begin(), matrix2.end());
+    int mdet = m.determinant();
     ASSERT_EQ(mdet, det);
+}
+
+std::vector<int> factorise(int x) {
+    std::vector<int> res;
+    for (int i = 2; x != 1 && i <= x; ++i) {
+        if (x % i == 0) {
+            res.push_back(i);
+            x /= i;
+            i = 2;
+        }
+    }
+    return res;
+}
+
+std::vector<std::vector<int>> genMatrixWithDet(int size, int det, int scale) {
+    std::vector<std::vector<int>> matrix(size, std::vector<int>(size));
+    std::vector<int> fact = factorise(det);
+    // for (int x : fact)
+    //     std::cout << x << ' ';
+    // std::cout << '\n';
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(-scale, scale);
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            if (j < i)
+                matrix[i][j] = 0;
+            else if (i == j)
+                matrix[i][j] = i < fact.size() ? fact[i] : 1;
+            else
+                matrix[i][j] = dist(gen);
+            //std::cout << matrix[i][j] << ' ';
+        }
+        //std::cout << '\n';
+    }
+
+    std::uniform_int_distribution<int> dist2(0, size - 1);    
+    for (int k = 0; k < size; ++k) {
+        int row = dist2(gen);
+        int add = dist2(gen);
+        if (row == add)
+            continue;
+
+        for (int i = 0; i < size; i++) {
+            matrix[row][i] += matrix[add][i];
+        }
+    }
+
+    // for (int i = 0; i < size; ++i) {
+    //     for (int j = 0; j < size; ++j) {
+    //         std::cout << matrix[i][j] << ' ';
+    //     }
+    //     std::cout << '\n';
+    // }
+
+    return matrix;
 }
 
 TEST(matrix, det_gen2) {
     size_t size = 100;
-    std::vector<std::vector<long long>> matrix = generateMatrix(size);
-    //long long det = calculateDeterminant(matrix);
-    std::vector<long long> matrix2(size * size);
+    int det = 42;
+    std::vector<std::vector<int>> matrix = genMatrixWithDet(size, det, 2);
+    std::vector<int> matrix2(size * size);
 
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             matrix2[i * size + j] = matrix[i][j];
+            
         }
     }
-    LinAl::Matrix<long long> m(size, size, matrix2.begin(), matrix2.end());
-    long long mdet = m.determinant();
-    //ASSERT_EQ(mdet, det);
+    LinAl::Matrix<int> m(size, size, matrix2.begin(), matrix2.end());
+    int mdet = m.determinant();
+    ASSERT_EQ(mdet, det);
 }
