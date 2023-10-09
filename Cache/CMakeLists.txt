@@ -17,4 +17,7 @@ include_directories(${GTest_INCLUDE_DIRS} include)
 add_executable(${PROJECT_NAME}_tests tests.cpp)
 target_link_libraries(${PROJECT_NAME}_tests PRIVATE GTest::GTest GTest::Main cache_lib)
 
+
+add_executable(perfectcache perf_driver.cpp)
+
 add_executable(${PROJECT_NAME} main.cpp)

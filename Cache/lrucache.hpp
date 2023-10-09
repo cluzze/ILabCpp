@@ -3,6 +3,7 @@
 #include <vector>
 #include <list>
 #include <unordered_map>
+#include <cstddef>
 
 namespace caches {
     template<typename KeyT = int, typename Hash = std::hash<KeyT>>

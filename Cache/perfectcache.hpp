@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <deque>
 #include <iostream>
+#include <cstddef>
 
 namespace caches {
     template <typename KeyT = int, typename Hash = std::hash<KeyT>>

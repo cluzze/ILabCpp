@@ -8,27 +8,6 @@
 
 using namespace caches;
 
-std::vector<int> readInput() {
-    std::string input;
-    std::getline(std::cin, input);
-
-    std::vector<int> requests;
-
-    std::istringstream iss(input);
-    int num;
-
-    while (iss >> num) {
-        requests.push_back(num);
-    }
-
-    if (!iss.eof() || (requests.size() < 2) || (requests[0] < 0) || (requests[1] != requests.size() - 2)) {
-        std::cout << "Invalid input format\n";
-        exit(1);
-    }
-
-    return requests;
-}
-
 int main() {
     int hits = 0;
     int n;
