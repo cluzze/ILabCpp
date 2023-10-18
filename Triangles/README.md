@@ -1,4 +1,4 @@
-Graphs
+Triangles
 ===
 Test for  triangle intersection
 
