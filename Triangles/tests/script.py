@@ -1,5 +1,5 @@
 import numpy as np
-def generate(count = 1000, scale = 5):
+def generate(count = 10000, scale = 3):
     MAX = 100
     topx = np.random.random([count,3])*MAX
     topy = topx + abs(np.random.normal(0,scale,[count,3]))
