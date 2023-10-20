@@ -4,6 +4,7 @@
 
 #include <concepts>
 #include <iterator>
+#include <numeric>
 #include <iostream>
 namespace LinAl
 {
@@ -28,18 +29,23 @@ namespace LinAl
 
         Matrix(size_type rows, size_type cols, std::initializer_list<value_type> init) : Matrix(rows, cols, init.begin(), init.end()) {}
 
-        containers::vector<value_type>& operator[](size_type id) {
+        containers::vector<value_type>& operator[](size_type id) & {
             return m2[id];
         }
 
-        Matrix transposed() const {
-            Matrix res(rows_, cols_);
+        const containers::vector<value_type>& operator[](size_type id) const & {
+            return m2[id];
+        }
+
+        Matrix& transpose() & {
+            Matrix res(cols_, rows_);
             for (int i = 0; i < rows_; i++) {
                 for (int j = 0; j < cols_; j++) {
                     res[j][i] = m2[i][j];
                 }
             }
-            return res;
+            std::swap(*this, res);
+            return *this;
         }
 
         int row_echelon_form() {
@@ -150,6 +156,37 @@ namespace LinAl
             std::swap(m2[row1], m2[row2]);
         }
 
+        size_type rows() const { return rows_; }
+        size_type cols() const { return cols_; }
+
+        bool equals(const Matrix& other, value_type prec = value_type{}) const {
+            if (rows_ != other.rows_ || cols_ != other.cols_)
+                return false;
+
+            for (int i = 0; i < rows_; i++)
+                for (int j = 0; j < cols_; j++)
+                    if (std::abs(m2[i][j] - other[i][j]) > prec)
+                        return false;
+
+            return true;
+        }
+        
+        Matrix& operator*=(const Matrix& rhs) {
+            if (cols_ != rhs.rows_)
+                throw std::runtime_error("number of cols must be equal number of rows");
+
+            Matrix res(rows_, rhs.cols_);
+            Matrix tmp(rhs);
+            tmp.transpose();
+            for (int i = 0; i < res.rows_; i++) {
+                for (int j = 0; j < res.cols_; j++) {
+                    res[i][j] = std::inner_product(m2[i].begin(), m2[i].end(), tmp[j].begin(), value_type{});
+                }
+            }
+            std::swap(*this, res);
+            return *this;
+        }
+
     private:
         std::pair<size_type, value_type> find_pivot(size_type row, size_type col) const {
             size_type id = row;
@@ -181,18 +218,15 @@ namespace LinAl
             }
         }
 
-        static value_type gcd(value_type a, value_type b) {
-            while (b) {
-                T tmp = b;
-                b = a % b;
-                a = tmp;
-            }
-            return a;
-        }
-
     private:
         size_type rows_, cols_;
         containers::vector<value_type> m1;
         containers::vector<containers::vector<value_type>> m2;
     };
+
+    template<typename T>
+    Matrix<T> operator*(const Matrix<T>& lhs, const Matrix<T>& rhs) {
+        Matrix<T> tmp(lhs);
+        return tmp *= rhs;
+    }
 } // namespace LinAl

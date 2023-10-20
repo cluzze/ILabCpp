@@ -325,11 +325,7 @@ namespace containers {
         }
 
         void push_back(const T &value) & {
-            try {
-                resize(size_ + 1, value);
-            } catch (...) {
-                throw;
-            }
+            resize(size_ + 1, value);
         }
 
         void push_back(T &&value) & {
@@ -350,11 +346,7 @@ namespace containers {
                     throw;
                 }
             }
-            try {
-                new (arr + size_) T(std::move(value));
-            } catch (...) {
-                throw;
-            }
+            new (arr + size_) T(std::move(value));
             size_++;
         }
 

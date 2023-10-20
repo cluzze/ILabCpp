@@ -5,6 +5,8 @@
 #include <random>
 #include <gtest/gtest.h>
 
+using namespace LinAl;
+
 std::vector<std::vector<int>> tests = {
     {4,
      0, 0,  0, -1,
@@ -249,4 +251,17 @@ TEST(matrix, det_gen2) {
     LinAl::Matrix<int> m(size, size, matrix2.begin(), matrix2.end());
     int mdet = m.determinant();
     ASSERT_EQ(mdet, det);
+}
+
+TEST(Matrix, transpose) {
+    Matrix<int> m1(2, 1, {1, 2}), m2 = m1;
+    ASSERT_TRUE(m1.equals(m2.transpose().transpose()));
+}
+
+TEST(Matrix, mult1) {
+    Matrix<int> m1(2, 1, {1, 2});
+    Matrix<int> m2(1, 2, {4, 3});
+    Matrix<int> m3 = m1 * m2;
+    Matrix<int> exp(2, 2, {4, 3, 8, 6});
+    ASSERT_TRUE(exp.equals(m3));
 }

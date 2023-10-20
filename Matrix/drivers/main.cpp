@@ -1,4 +1,5 @@
 #include "matrix.hpp"
+#include "matrix_chain.hpp"
 
 int main() {
     size_t size;
@@ -10,7 +11,5 @@ int main() {
             std::cin >> m[i][j];
         }
     }
-
-    //m.print();
     std::cout << m.determinant() << '\n';
 }
