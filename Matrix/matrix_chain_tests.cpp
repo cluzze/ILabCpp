@@ -118,7 +118,7 @@ TEST(chain, mult_gen) {
 TEST(chain, mult_gen1) {
     MatrixChain<long long> chain;
     std::vector<Matrix<long long>> v;
-    v.push_back({500, 5});
+    v.push_back({200, 5});
     v.push_back({5, 1000});
     v.push_back({1000, 350});
     v.push_back({350, 50});
@@ -139,4 +139,28 @@ TEST(chain, mult_gen1) {
     //std::cout << chain.getOptimalNumberOfMultiplications() << '\n' << chain.getNormalNumberOfMultiplications() << '\n';
     //m1.print();
     ASSERT_TRUE(m1.equals(m2));
+}
+
+long unsigned genInt() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<long unsigned> dist(1, 100);
+    return dist(gen);
+}
+
+TEST(chain, gen) {
+    MatrixChain<long long> chain;
+    std::vector<Matrix<long long>> v;
+    long unsigned last = genInt();
+    for (int i = 0; i < 20; i++) {
+        v.push_back({last, genInt()});
+        last = v[i].cols();
+    }
+    for (int i = 0; i < v.size(); i++) {
+        fillMatrix(v[i]);
+        chain.addMatrix(v[i]);
+    }
+    Matrix<long long> m1 = chain.computeChainOptimal(), m2 = chain.computeChainDefault();
+    ASSERT_TRUE(m1.equals(m2));
+    std::cout << "Optimal: " << chain.getOptimalNumberOfMultiplications() << "\nDefault: " << chain.getNormalNumberOfMultiplications() << '\n';
 }
