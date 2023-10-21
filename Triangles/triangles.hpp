@@ -2,9 +2,12 @@
 
 #include <array>
 #include <stdexcept>
+#include <algorithm>
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <set>
+#include <unordered_map>
 
 namespace geometry {
 	
@@ -443,7 +446,7 @@ namespace geometry {
 		
 		Triangle2 projectOnSomeAxis() const {
 			int axis = 0;
-			if (plane().normal().dot({0, 0, 1}) == 0)
+			if (plane().normal().dot({1, 0, 0}) == 0)
 				axis = 1;
 			return projectOnAxis(axis);
 		}
@@ -476,8 +479,11 @@ namespace geometry {
 		int handleDegenerateCases(const Triangle3& other) const {
 			if (isDegeneratePoint()) {
 				if (!other.isDegenerateLine()) {
-					Triangle2 t2 = other.projectOnAxis(0);
-					Vec2 p = a.projectOnAxis(0);
+					int axis = 0;
+					if (other.plane().normal().dot({1, 0, 0}) == 0)
+						axis = 1;
+					Triangle2 t2 = other.projectOnAxis(axis);
+					Vec2 p = a.projectOnAxis(axis);
 					return t2.isPointInsideTriangle(p);
 				}
 				
@@ -490,8 +496,11 @@ namespace geometry {
 
 			if (other.isDegeneratePoint()) {
 				if (!isDegenerateLine()) {
-					Triangle2 t1 = projectOnAxis(0);
-					Vec2 p = a.projectOnAxis(0);
+					int axis = 0;
+					if (plane().normal().dot({1, 0, 0}) == 0)
+						axis = 1;
+					Triangle2 t1 = projectOnAxis(axis);
+					Vec2 p = other.a.projectOnAxis(axis);
 					return t1.isPointInsideTriangle(p);
 				}
 				
@@ -534,8 +543,7 @@ namespace geometry {
 					return false;
 				}
 				
-				Triangle2 t1 = projectOnSomeAxis();
-				Triangle2 t2 = other.projectOnSomeAxis();
+				auto [t1, t2] = projectTrianglesOnNonPerpAxis(other);
 				return t1.intersect(t2);
 			}
 
@@ -552,7 +560,8 @@ namespace geometry {
 			std::pair<Triangle3, std::vector<double>> canon2 = other.rotateTriangleEdges(dist1);
 			
 			std::vector<double> values{line.direction[0], line.direction[1], line.direction[2]};
-			auto max_id = std::distance(values.begin(), std::max_element(values.begin(), values.end()));
+			auto max_id = std::distance(values.begin(), std::max_element(values.begin(), values.end(), 
+						[](double x1, double x2) { return std::abs(x1) < std::abs(x2); }));
 
 			std::vector<double> t1{canon1.first.a[max_id], canon1.first.b[max_id], canon1.first.c[max_id]};
 			std::vector<double> t2{canon2.first.a[max_id], canon2.first.b[max_id], canon2.first.c[max_id]};
@@ -566,6 +575,31 @@ namespace geometry {
 			LineSegment1 seg1(t00, t01), seg2(t10, t11);
 
 			return seg1.intersect(seg2);
+		}
+
+		std::pair<Triangle2, Triangle2> projectTrianglesOnNonPerpAxis(const Triangle3& t2) const {
+			std::set<int> axis1{0, 1, 2}, axis2{0, 1, 2};
+			Plane plane1 = plane();
+			Plane plane2 = t2.plane();
+			if (plane1.normal().dot({1, 0, 0}) == 0)
+				axis1.erase(0);
+			if (plane1.normal().dot({0, 1, 0}) == 0)
+				axis1.erase(1);
+			if (plane1.normal().dot({0, 0, 1}) == 0)
+				axis1.erase(2);
+
+			if (plane2.normal().dot({1, 0, 0}) == 0)
+				axis2.erase(0);
+			if (plane2.normal().dot({0, 1, 0}) == 0)
+				axis2.erase(1);
+			if (plane2.normal().dot({0, 0, 1}) == 0)
+				axis2.erase(2);
+			
+			std::set<int> axis;
+			std::set_intersection(axis1.begin(), axis1.end(), axis2.begin(), axis2.end(), 
+					std::inserter(axis, axis.begin()));
+
+			return {projectOnAxis(*axis.begin()), t2.projectOnAxis(*axis.begin())};
 		}
 	};
 }
