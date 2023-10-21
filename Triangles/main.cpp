@@ -36,7 +36,7 @@ int main() {
 
 	std::set<int> collisions_smart;
 
-	std::clock_t start = std::clock();
+	//std::clock_t start = std::clock();
 	for (int i = 0; i < n; i++) {
 		std::vector<std::size_t> v = tree.get_potential_collision(i);
 		for (int j = 0; j < v.size(); j++) {
@@ -47,11 +47,10 @@ int main() {
 			}
 		}
 	}
-	std::clock_t fin = std::clock();
+	//std::clock_t fin = std::clock();
 	
 	for (auto x : collisions_smart)
-		std::cout << x << ' ';
-	
-	std::cout << '\n';
+		std::cout << x << '\n';
+
 	//std::cout << "\ntime took:" << 1000.0 * (fin - start) / CLOCKS_PER_SEC << "ms\n";
 }
