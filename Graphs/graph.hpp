@@ -117,7 +117,7 @@ namespace containers
 		int cycleSize = 0;
 		int old_v2 = v2;
 		graph[v2].link = 1;
-		while (v2 != graph[v2].parent) {
+		while (v2 != graph.at(v2).parent) {
 			graph[v2].link = 1;
 			v2 = graph[v2].parent;
 		}
@@ -164,7 +164,7 @@ namespace containers
 					s2 = v2;
 				}
 			} else if (graph[v1].color == graph[v2].color) {
-				saveCycle(v1, v2, cycle);
+				//saveCycle(v1, v2, cycle);
 				return false;
 			}
 		}
@@ -186,7 +186,6 @@ namespace containers
 	}
 
 	bool Graph::bfs_impl(int i, std::vector<int>& cycle) {
-		bool res = true;
 		int s1, s2;
 
 		graph[i].color = 0;
