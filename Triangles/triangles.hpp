@@ -8,6 +8,7 @@
 #include <iostream>
 #include <set>
 #include <unordered_map>
+#include <optional>
 
 namespace geometry {
 	
@@ -373,6 +374,21 @@ namespace geometry {
 		double signedDistance(const Vec3& p) const { return dot(p, normal_) - dist_; }
 		double distance(const Vec3& p) const { return std::abs(signedDistance(p)); }
 
+		std::optional<Vec3> intersection(const LineSegment3& seg) const {
+			double d1 = signedDistance(seg.a);
+			double d2 = signedDistance(seg.b);
+
+			if (is_roughly_equal(d1, 0))
+				return seg.a;
+			if (is_roughly_equal(d2, 0))
+				return seg.b;
+			
+			if (d1 * d2 > 0)
+				return std::nullopt;
+			
+			return ((d1) / (d1 - d2)) * (seg.b - seg.a) + seg.a;
+		}
+
 		Line3 intersection(const Plane& other) const {
 			Line3 line;
 			line.direction = cross(normal_, other.normal_);
@@ -472,7 +488,7 @@ namespace geometry {
 				case 2:
 					return {Triangle3{a, c, b}, std::vector<double>{dist[0], dist[2], dist[1]}};
 				default:
-					throw std::runtime_error("Invalid distances array passed into MakeCanonicalTriangle");
+					throw std::runtime_error("Invalid distances array passed into rotateTriangleEdges");
 			}
 		}
 		
@@ -537,6 +553,28 @@ namespace geometry {
 				return false;
 			
 			Plane plane2 = other.plane();
+
+			// auto n_zeros1 = std::count_if(dist1.begin(), dist1.end(), [](double x) { return x == 0; });
+			// if (n_zeros1) {
+			// 	std::vector<std::pair<Vec3, double>> v{{other.a, dist1[0]}, {other.b, dist1[1]}, {other.c, dist1[2]}};
+			// 	Vec3 pn = plane1.normal();
+			// 	std::vector<double> values{pn[0], pn[1], pn[2]};
+			// 	auto max_id = std::distance(values.begin(), std::max_element(values.begin(), values.end(), 
+			// 			[](double x1, double x2) { return std::abs(x1) < std::abs(x2); }));
+			// 	Triangle2 t1 = projectOnAxis(max_id);
+			// 	switch (n_zeros1) {
+			// 		case 1: {
+			// 			auto zero_id = std::distance(dist1.begin(), std::find(dist1.begin(), dist1.end(), 0));
+			// 			Vec2 pz = v[zero_id].first.projectOnAxis(max_id);
+			// 			if (t1.isPointInsideTriangle(pz))
+			// 				return true;
+			// 			if (v[(zero_id + 1) % dist1.size()].second * v[(zero_id + 2) % dist1.size()].second > 0)
+			// 				return false;
+						
+			// 			return t1.isPointInsideTriangle
+			// 		}
+			// 	}
+			// }
 
 			if (plane1.parallel(plane2)) {
 				if (plane1.dist() != plane2.dist()) {

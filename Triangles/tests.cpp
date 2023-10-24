@@ -294,12 +294,21 @@ TEST(Triangles, e2e) {
 			}
 		}
 	}
-
-	// for (auto x : collisions_naive)
-	// 	std::cout << x << ' ';
-	// std::cout << '\n';
-	// for (auto x : collisions_smart)
-	// 	std::cout << x << ' ';
-	
 	ASSERT_TRUE(collisions_naive == collisions_smart);
+}
+
+TEST(Plane, seg_intersection1) {
+	Plane p({0, 0, 1}, 0);
+	LineSegment3 s1{{-1, -1, -1}, {1, 1, 1}};
+	auto res = p.intersection(s1);
+	ASSERT_TRUE(res.has_value());
+	ASSERT_TRUE(res.value() == Vec3(0, 0, 0));
+}
+
+TEST(Plane, seg_intersection2) {
+	Plane p({0, 0, 1}, 0);
+	LineSegment3 s1{{0, 0, -1}, {1, 1, 1}};
+	auto res = p.intersection(s1);
+	ASSERT_TRUE(res.has_value());
+	ASSERT_EQ(res.value(), Vec3(0.5, 0.5, 0));
 }
