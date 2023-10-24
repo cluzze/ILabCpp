@@ -247,6 +247,12 @@ TEST(Triangle3, Intersect14) {
 	ASSERT_FALSE(a.intersect(b));
 }
 
+TEST(Triangle3, Intersect15) {
+	Triangle3 a{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
+	Triangle3 b{{0, 0, 0.01}, {5, 5, 0.01}, {5, 5, 0}};
+	ASSERT_FALSE(a.intersect(b));
+}
+
 TEST(Triangles, e2e) {
 	int n;
 	std::ifstream file("tests/data.txt");
