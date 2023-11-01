@@ -32,23 +32,14 @@ std::vector<std::pair<char, int>> parseInput(std::string& input) {
     return requests;
 }
 
-std::vector<int> genNumbers(int size, int n) {
-    std::vector<int> numbers(size);
+std::vector<int> genNumbers(int n) {
+    std::vector<int> v(2 * n + 1);
+    int k = -n;
+    std::generate(v.begin(), v.end(), [&k](){ return k++; });
     std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(-n, n);
-
-    for (int i = 0; i < size; i++) {
-        numbers[i] = dis(gen);
-        for (int j = 0; j < i; j++) {
-            if (numbers[i] == numbers[j]) {
-                i--;
-                break;
-            }
-        }
-    }
-
-    return numbers;
+    std::mt19937 g(rd());
+    std::shuffle(v.begin(), v.end(), g);
+    return v;
 }
 
 int ERROR = -123132131;
@@ -69,7 +60,7 @@ int cnt(const std::vector<int>& numbers, int n) {
 using namespace containers;
 
 int size = 1000, values = 10000;
-std::vector<int> numbers = genNumbers(size, values);
+std::vector<int> numbers = genNumbers(values);
 
 int main() {
     testing::InitGoogleTest();
@@ -81,7 +72,7 @@ TEST(trees, cnt) {
     
     for (auto i : numbers)
         tree.insert(i);
-
+    
     for (int i = -values; i <= values; i++) {
         int res = tree.cnt(i);
         int exp = cnt(numbers, i);
@@ -151,24 +142,24 @@ std::string genInput(int n) {
 
     std::string result = "";
     for (int i = 0; i < n; ++i) {
-        char letter;
+        std::string letter;
         int number = dis(gen);
         switch (i % 3) {
             case 0:
-                letter = 'k';
+                letter = "k";
                 break;
             case 1:
-                letter = 'n';
+                letter = "n";
                 break;
             case 2:
-                letter = 'm';
+                letter = "m";
                 break;
         }
         result += letter + " " + std::to_string(number) + " ";
     }
-    // std::ofstream file;
-    // file.open("../tests/test1.txt");
-    // file << result;
+    std::ofstream file;
+    file.open("../tests/test1.txt");
+    file << result;
     return result;
 }
 
@@ -187,6 +178,14 @@ struct CompA {
     }
 };
 
-TEST(constructor, non_trivial_class) {
+TEST(tree, constructor_non_trivial_class) {
     SearchTree<A, CompA> t;
+    t.insert({1, 2});
+    auto it = t.find({1, 2});
+}
+
+TEST(tree, copy_ctr) {
+    SearchTree<A, CompA> t;
+    t.insert({1, 2});
+    SearchTree<A, CompA> t2(t);
 }

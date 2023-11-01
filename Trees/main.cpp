@@ -49,6 +49,7 @@ int main() {
         switch (type) {
         case 'k':
             tree.insert(value);
+            tree.dump();
             break;
         case 'm':
             it = tree.nth_element(value);
