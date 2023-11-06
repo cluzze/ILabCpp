@@ -14,6 +14,7 @@ namespace containers
             Black = 0,
             Red = 1
         };
+
         struct TreeNode;
         using ListIt = std::list<TreeNode>::iterator;
         struct TreeNode {
@@ -43,7 +44,11 @@ namespace containers
 
         int cnt(KeyT key) const;
         iterator nth_element(int n) const;
+        
+        iterator begin() const { return nodes.begin(); }
         iterator end() const { return nil_; }
+
+        void printInOrder() const;
         void dump() const;
     private:
         iterator find_impl(iterator node, KeyT key) const;
@@ -64,7 +69,7 @@ namespace containers
 
     template <typename KeyT, typename Comp>
     SearchTree<KeyT, Comp>::SearchTree() {
-        nodes.push_back(TreeNode{KeyT{}, 0, Color::Black, nodes.end(), nodes.end(), nodes.end()});
+        nodes.emplace_back(KeyT{}, 0, Color::Black, nodes.end(), nodes.end(), nodes.end());
         nil_ = std::prev(nodes.end());
         nil_->p = nil_;
         nil_->left = nil_;
@@ -172,7 +177,7 @@ namespace containers
 
     template <typename KeyT, typename Comp>
 	SearchTree<KeyT, Comp>::iterator SearchTree<KeyT, Comp>::insert(KeyT key) {
-        nodes.push_back(TreeNode{key, 1, Color::Red, nil_, nil_, nil_});
+        nodes.emplace_back(key, 1, Color::Red, nil_, nil_, nil_);
         ListIt z = std::prev(nodes.end());
         ListIt x = root_, y = nil_;
 
@@ -181,8 +186,12 @@ namespace containers
             x->subtreeSize++;
             if (Comp()(z->key, x->key))
                 x = x->left;
-            else
+            else if (Comp()(x->key, z->key))
                 x = x->right;
+            else {
+                nodes.pop_back();
+                return nil_;
+            }
         }
 
         z->p = y;
@@ -196,7 +205,7 @@ namespace containers
             y->right = z;
         
         z = insertFixup(z);
-
+        nodes.splice(next(z), nodes, z);
         return z;
     }
 
@@ -304,7 +313,7 @@ namespace containers
         if (old_color == Color::Black) {
             eraseFixup(x);
         }
-        delete z;
+        nodes.erase(z);
     }
 
     template <typename KeyT, typename Comp>
@@ -366,6 +375,15 @@ namespace containers
         }
         x->color = Color::Black;
     }
+
+    template <typename KeyT, typename Comp>
+    void SearchTree<KeyT, Comp>::printInOrder() const {
+        for (auto x = nodes.begin(); x != nil_; std::advance(x, 1)) {
+            std::cout << x->key << ' ';
+        }
+        std::cout << '\n';
+    }
+
     template <typename KeyT, typename Comp>
     void SearchTree<KeyT, Comp>::dump() const {
         if (root_ == nil_) {
@@ -375,6 +393,7 @@ namespace containers
 
         dump_impl(root_);
     }
+
     template <typename KeyT, typename Comp>
     void SearchTree<KeyT, Comp>::dump_impl(iterator node) const {
         char c1 = node->color == Color::Black ? 'b' : 'r';
