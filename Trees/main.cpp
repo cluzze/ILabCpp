@@ -54,8 +54,6 @@ int main() {
             it = tree.nth_element(value);
             if (it != tree.end())
                 std::cout << it->key << ' ';
-            else
-                std::cout << "lol";
             break;
         case 'n':
             res = tree.cnt(value);
@@ -65,4 +63,5 @@ int main() {
             break;
         }
     }
+    std::cout << '\n';
 }

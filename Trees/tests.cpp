@@ -36,11 +36,50 @@ TEST(tree, copy_ctr) {
 
 TEST(tree, iterators) {
     SearchTree<int> t;
-    t.insert(1);
-    t.insert(2);
-    t.insert(3);
-    t.insert(4);
+    for (int i = 1; i <= 5; i++) {
+        t.insert(i);
+    }
     auto it = t.begin();
-    it++;
-    ASSERT_TRUE(it->key);
+    for (int i = 1; i <= 5; i++, ++it) {
+        ASSERT_EQ(it->key, i);
+    }
+}
+
+TEST(tree, iterators_erase) {
+    SearchTree<int> t;
+    for (int i = 1; i <= 5; i++) {
+        t.insert(i);
+    }
+    auto it = t.begin();
+    auto it2 = (it++);
+    t.erase(it);
+    t.erase(it2);
+    auto f = t.find(1);
+    auto f2 = t.find(2);
+    it = t.begin();
+    ASSERT_EQ(f, t.end());
+    ASSERT_EQ(f2, t.end());
+    for (int i = 3; i <= 5; i++, ++it) {
+        ASSERT_EQ(it->key, i);
+    }
+}
+
+TEST(tree, next) {
+    SearchTree<int> t;
+    for (int i = 1; i <= 5; i++) {
+        t.insert(i);
+    }
+    int i = 1;
+#if 1
+    auto it = t.begin();
+#endif
+    for (; it != t.end(); ++it) {
+#if 0
+    for (auto x : t) {
+#endif
+        if (i == 5)
+            ASSERT_EQ(t.next(it), t.end());
+        else
+            ASSERT_EQ(t.next(it)->key, ++i);
+    }
 }

@@ -30,6 +30,12 @@ namespace containers
         std::list<TreeNode> nodes;
     public:
         using iterator = ListIt;
+        using const_iterator = std::list<TreeNode>::const_iterator;
+
+        iterator begin() { return nodes.begin(); }
+        iterator end() { return nil_; }
+        const_iterator cbegin() const { return nodes.cbegin(); }
+        const_iterator cend() const { return nil_; }
 
     public:
         SearchTree();
@@ -40,13 +46,10 @@ namespace containers
         iterator findMax() const;
         iterator next(iterator node) const;
         iterator insert(KeyT key);
-        void erase(iterator node);
+        void erase(const iterator node);
 
         int cnt(KeyT key) const;
         iterator nth_element(int n) const;
-        
-        iterator begin() const { return nodes.begin(); }
-        iterator end() const { return nil_; }
 
         void printInOrder() const;
         void dump() const;
@@ -204,7 +207,7 @@ namespace containers
         else
             y->right = z;
         
-        z = insertFixup(z);
+        insertFixup(z);
         nodes.splice(next(z), nodes, z);
         return z;
     }
@@ -272,7 +275,9 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-	void SearchTree<KeyT, Comp>::erase(iterator z) {
+	void SearchTree<KeyT, Comp>::erase(const iterator z) {
+        if (z == cend())
+            throw std::runtime_error("end iterator passed to erase function in tree");
         ListIt node = root_;
         
         while (node != z) {
@@ -378,7 +383,8 @@ namespace containers
 
     template <typename KeyT, typename Comp>
     void SearchTree<KeyT, Comp>::printInOrder() const {
-        for (auto x = nodes.begin(); x != nil_; std::advance(x, 1)) {
+        auto x = nodes.begin();
+        for (; x != nodes.end(); ++x) {
             std::cout << x->key << ' ';
         }
         std::cout << '\n';
