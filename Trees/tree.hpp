@@ -8,7 +8,7 @@
 namespace containers
 {
     template <typename KeyT, typename Comp = std::less<KeyT>>
-	class SearchTree {
+	class SearchTree final : private Comp {
     private:
         enum class Color {
             Black = 0,
@@ -38,7 +38,15 @@ namespace containers
         const_iterator cend() const { return nil_; }
 
     public:
-        SearchTree();
+        SearchTree(Comp comp = Comp()) : Comp(comp) {
+            nodes.emplace_back(KeyT{}, 0, Color::Black, nodes.end(), nodes.end(), nodes.end());
+            nil_ = std::prev(nodes.end());
+            nil_->p = nil_;
+            nil_->left = nil_;
+            nil_->right = nil_;
+            root_ = nil_;
+        }
+        SearchTree(std::initializer_list<KeyT> init, Comp comp = Comp()) : Comp(comp) {}
 
     public:
         iterator find(KeyT key) const;
@@ -68,17 +76,8 @@ namespace containers
 
         iterator nth_element_impl(ListIt node, int n) const;
 
+        bool compare(const KeyT& lhs, const KeyT& rhs) const { return Comp::operator()(lhs, rhs); }
     };
-
-    template <typename KeyT, typename Comp>
-    SearchTree<KeyT, Comp>::SearchTree() {
-        nodes.emplace_back(KeyT{}, 0, Color::Black, nodes.end(), nodes.end(), nodes.end());
-        nil_ = std::prev(nodes.end());
-        nil_->p = nil_;
-        nil_->left = nil_;
-        nil_->right = nil_;
-        root_ = nil_;
-    }
 
     template <typename KeyT, typename Comp>
 	SearchTree<KeyT, Comp>::iterator SearchTree<KeyT, Comp>::find(KeyT key) const {
@@ -87,8 +86,8 @@ namespace containers
 
     template <typename KeyT, typename Comp>
 	SearchTree<KeyT, Comp>::iterator SearchTree<KeyT, Comp>::find_impl(iterator node, KeyT key) const {
-        while (node != nil_ && Comp()(key, node->key) != Comp()(node->key, key))
-            if (Comp()(key, node->key))
+        while (node != nil_ && compare(key, node->key) != compare(node->key, key))
+            if (compare(key, node->key))
                 node = node->left;
             else
                 node = node->right;
@@ -187,9 +186,9 @@ namespace containers
         while (x != nil_) {
             y = x;
             x->subtreeSize++;
-            if (Comp()(z->key, x->key))
+            if (compare(z->key, x->key))
                 x = x->left;
-            else if (Comp()(x->key, z->key))
+            else if (compare(x->key, z->key))
                 x = x->right;
             else {
                 nodes.pop_back();
@@ -202,7 +201,7 @@ namespace containers
             root_ = z;
             root_->subtreeSize = 1;
         }
-        else if (Comp()(z->key, y->key))
+        else if (compare(z->key, y->key))
             y->left = z;
         else
             y->right = z;
@@ -261,15 +260,12 @@ namespace containers
     void SearchTree<KeyT, Comp>::transplant(iterator u, iterator v) {
         if (u->p == nil_) {
             root_ = v;
-            //root_->subtreeSize = v->subtreeSize;
         }
         else if (u == u->p->left) {
             u->p->left = v;
-            //u->p->subtreeSize += v->subtreeSize - u->subtreeSize;
         }
         else {
             u->p->right = v;
-            //u->p->subtreeSize += v->subtreeSize - u->subtreeSize;
         }
         v->p = u->p;
     }
@@ -282,7 +278,7 @@ namespace containers
         
         while (node != z) {
             node->subtreeSize--;
-            if (Comp()(z->key, node->key))
+            if (compare(z->key, node->key))
                 node = node->left;
             else
                 node = node->right;
@@ -435,7 +431,7 @@ namespace containers
         int res = root_->subtreeSize;
         while (node != nil_ && key != node->key) {
             y = node;
-            if (Comp()(key, node->key)) {
+            if (compare(key, node->key)) {
                 res -= node->right->subtreeSize + 1;
                 node = node->left;
             } else {

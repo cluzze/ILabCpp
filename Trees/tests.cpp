@@ -16,7 +16,7 @@ struct A {
 };
 
 struct CompA {
-    bool operator()(const A& a, const A&b) {
+    bool operator()(const A& a, const A&b) const {
         return a.x < b.x;
     }
 };
@@ -70,13 +70,8 @@ TEST(tree, next) {
         t.insert(i);
     }
     int i = 1;
-#if 1
     auto it = t.begin();
-#endif
     for (; it != t.end(); ++it) {
-#if 0
-    for (auto x : t) {
-#endif
         if (i == 5)
             ASSERT_EQ(t.next(it), t.end());
         else
