@@ -53,7 +53,7 @@ int main() {
         case 'm':
             it = tree.nth_element(value);
             if (it != tree.end())
-                std::cout << it->key << ' ';
+                std::cout << *it << ' ';
             break;
         case 'n':
             res = tree.cnt(value);

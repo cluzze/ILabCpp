@@ -41,7 +41,7 @@ TEST(tree, iterators) {
     }
     auto it = t.begin();
     for (int i = 1; i <= 5; i++, ++it) {
-        ASSERT_EQ(it->key, i);
+        ASSERT_EQ(*it, i);
     }
 }
 
@@ -51,7 +51,7 @@ TEST(tree, iterators_erase) {
         t.insert(i);
     }
     auto it = t.begin();
-    auto it2 = (it++);
+    auto it2 = std::next(it);
     t.erase(it);
     t.erase(it2);
     auto f = t.find(1);
@@ -60,7 +60,7 @@ TEST(tree, iterators_erase) {
     ASSERT_EQ(f, t.end());
     ASSERT_EQ(f2, t.end());
     for (int i = 3; i <= 5; i++, ++it) {
-        ASSERT_EQ(it->key, i);
+        ASSERT_EQ(*it, i);
     }
 }
 
@@ -75,6 +75,27 @@ TEST(tree, next) {
         if (i == 5)
             ASSERT_EQ(t.next(it), t.end());
         else
-            ASSERT_EQ(t.next(it)->key, ++i);
+            ASSERT_EQ(*t.next(it), ++i);
+    }
+
+    it = t.begin();
+    //*it = 123; CE
+}
+
+TEST(tree, correct_order) {
+    SearchTree<int> t;
+    std::vector<int> v(100);
+    int k = 1;
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::generate(v.begin(), v.end(), [&k](){ return k++; });
+    std::shuffle(v.begin(), v.end(), g);
+    std::for_each(v.begin(), v.end(), [&](const auto& x) { t.insert(x); });
+    auto order = t.getInorder();
+    ASSERT_TRUE(std::is_sorted(order.begin(), order.end()));
+    for (int i = 1; i <= v.size() / 2; i++) {
+        auto it = t.find(i);
+        t.erase(it);
+        ASSERT_TRUE(std::is_sorted(order.begin(), order.end()));
     }
 }

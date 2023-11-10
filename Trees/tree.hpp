@@ -17,6 +17,7 @@ namespace containers
 
         struct TreeNode;
         using ListIt = std::list<TreeNode>::iterator;
+        using CListIt = std::list<TreeNode>::const_iterator;
         struct TreeNode {
             KeyT key;
             int subtreeSize;
@@ -29,14 +30,103 @@ namespace containers
 
         std::list<TreeNode> nodes;
     public:
-        using iterator = ListIt;
-        using const_iterator = std::list<TreeNode>::const_iterator;
+        class iterator {
+        private:
+            ListIt ptr;
+        
+        public:
+            using iterator_category = std::bidirectional_iterator_tag;
+            using difference_type = ListIt::difference_type;
+            using value_type = KeyT;
+            using reference = const value_type&;
+            using pointer = const value_type*;
+
+        public:
+            iterator(ListIt it = ListIt{}) : ptr(it) {}
+
+            iterator& operator++() {
+                ptr++;
+                return *this;
+            }
+
+            iterator operator++(int) {
+                iterator tmp(ptr);
+                ptr++;
+                return *this;
+            }
+
+            iterator& operator--() {
+                ptr--;
+                return *this;
+            }
+
+            iterator operator--(int) {
+                iterator tmp(ptr);
+                ptr--;
+                return *this;
+            }
+
+            reference operator*() const { return ptr->key; }
+            pointer operator->() const { return &ptr->key; }
+            
+            auto operator<=>(const iterator&) const = default;
+            bool operator==(const iterator& rhs) const { return ptr == rhs.ptr; }
+            bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
+
+            friend class SearchTree;
+        };
+        
+        class const_iterator {
+        private:
+           CListIt ptr;
+        
+        public:
+            using iterator_category = std::bidirectional_iterator_tag;
+            using difference_type = CListIt::difference_type;
+            using value_type = const KeyT;
+            using reference = value_type&;
+            using pointer = value_type*;
+
+        public:
+            const_iterator(CListIt it = CListIt{}) : ptr(it) {}
+
+            const_iterator& operator++() {
+                ptr++;
+                return *this;
+            }
+
+            const_iterator operator++(int) {
+                iterator tmp(ptr);
+                ptr++;
+                return *this;
+            }
+
+            const_iterator& operator--() {
+                ptr--;
+                return *this;
+            }
+
+            const_iterator operator--(int) {
+                iterator tmp(ptr);
+                ptr--;
+                return *this;
+            }
+
+            reference operator*() const { return ptr->key; }
+            pointer operator->() const { return &ptr->key; }
+            
+            auto operator<=>(const const_iterator&) const = default;
+            bool operator==(const const_iterator& rhs) const { return ptr == rhs.ptr; }
+            bool operator!=(const const_iterator& rhs) const { return !(*this == rhs); }
+
+            friend class SearchTree;
+        };
 
         iterator begin() { return nodes.begin(); }
         iterator end() { return nil_; }
-        const_iterator cbegin() const { return nodes.cbegin(); }
-        const_iterator cend() const { return nil_; }
-
+        const_iterator cbegin() const { return nodes.begin(); }
+        const_iterator cend() const { return std::prev(nodes.cend()); }
+        
     public:
         SearchTree(Comp comp = Comp()) : Comp(comp) {
             nodes.emplace_back(KeyT{}, 0, Color::Black, nodes.end(), nodes.end(), nodes.end());
@@ -52,29 +142,31 @@ namespace containers
         iterator find(KeyT key) const;
         iterator findMin() const;
         iterator findMax() const;
-        iterator next(iterator node) const;
         iterator insert(KeyT key);
-        void erase(const iterator node);
+        iterator next(iterator it) const { return ++it; }
+        void erase(const iterator it);
 
         int cnt(KeyT key) const;
         iterator nth_element(int n) const;
 
+        std::vector<KeyT> getInorder() const { return std::vector<KeyT>(cbegin(), cend()); };
         void printInOrder() const;
         void dump() const;
     private:
-        iterator find_impl(iterator node, KeyT key) const;
-        iterator findMin_impl(iterator node) const;
-        iterator findMax_impl(iterator node) const;
+        ListIt next_impl(ListIt node) const;
+        ListIt find_impl(ListIt node, KeyT key) const;
+        ListIt findMin_impl(ListIt node) const;
+        ListIt findMax_impl(ListIt node) const;
 
-        void leftRotate(iterator node);
-        void rightRotate(iterator node);
+        void leftRotate(ListIt node);
+        void rightRotate(ListIt node);
 
-        iterator insertFixup(iterator node);
-        void transplant(iterator u, iterator v);
-        void eraseFixup(iterator node);
-        void dump_impl(iterator node) const;
+        ListIt insertFixup(ListIt node);
+        void transplant(ListIt u, ListIt v);
+        void eraseFixup(ListIt node);
+        void dump_impl(ListIt node) const;
 
-        iterator nth_element_impl(ListIt node, int n) const;
+        ListIt nth_element_impl(ListIt node, int n) const;
 
         bool compare(const KeyT& lhs, const KeyT& rhs) const { return Comp::operator()(lhs, rhs); }
     };
@@ -85,7 +177,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-	SearchTree<KeyT, Comp>::iterator SearchTree<KeyT, Comp>::find_impl(iterator node, KeyT key) const {
+	SearchTree<KeyT, Comp>::ListIt SearchTree<KeyT, Comp>::find_impl(ListIt node, KeyT key) const {
         while (node != nil_ && compare(key, node->key) != compare(node->key, key))
             if (compare(key, node->key))
                 node = node->left;
@@ -101,7 +193,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-	SearchTree<KeyT, Comp>::iterator SearchTree<KeyT, Comp>::findMin_impl(iterator node) const {
+	SearchTree<KeyT, Comp>::ListIt SearchTree<KeyT, Comp>::findMin_impl(ListIt node) const {
         while (node->left != nil_)
             node = node->left;
 
@@ -114,7 +206,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-	SearchTree<KeyT, Comp>::iterator SearchTree<KeyT, Comp>::findMax_impl(iterator node) const {
+	SearchTree<KeyT, Comp>::ListIt SearchTree<KeyT, Comp>::findMax_impl(ListIt node) const {
         while (node->right != nil_)
             node = node->right;
             
@@ -122,7 +214,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-	SearchTree<KeyT, Comp>::iterator SearchTree<KeyT, Comp>::next(iterator x) const {
+	SearchTree<KeyT, Comp>::ListIt SearchTree<KeyT, Comp>::next_impl(ListIt x) const {
         if (x->right != nil_)
             return findMin_impl(x->right);
         
@@ -136,7 +228,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-    void SearchTree<KeyT, Comp>::leftRotate(iterator x) {
+    void SearchTree<KeyT, Comp>::leftRotate(ListIt x) {
         ListIt y = x->right;
         
         x->subtreeSize -= y->right->subtreeSize + 1;
@@ -157,7 +249,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-    void SearchTree<KeyT, Comp>::rightRotate(iterator y) {
+    void SearchTree<KeyT, Comp>::rightRotate(ListIt y) {
         ListIt x = y->left;
 
         x->subtreeSize += y->right->subtreeSize + 1;
@@ -207,12 +299,12 @@ namespace containers
             y->right = z;
         
         insertFixup(z);
-        nodes.splice(next(z), nodes, z);
+        nodes.splice(next_impl(z), nodes, z);
         return z;
     }
 
     template <typename KeyT, typename Comp>
-	SearchTree<KeyT, Comp>::iterator SearchTree<KeyT, Comp>::insertFixup(iterator z) {
+	SearchTree<KeyT, Comp>::ListIt SearchTree<KeyT, Comp>::insertFixup(ListIt z) {
         while (z->p->color == Color::Red) {
             if (z->p == z->p->p->left) {
                 ListIt y = z->p->p->right;
@@ -257,7 +349,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-    void SearchTree<KeyT, Comp>::transplant(iterator u, iterator v) {
+    void SearchTree<KeyT, Comp>::transplant(ListIt u, ListIt v) {
         if (u->p == nil_) {
             root_ = v;
         }
@@ -271,11 +363,12 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-	void SearchTree<KeyT, Comp>::erase(const iterator z) {
-        if (z == cend())
+	void SearchTree<KeyT, Comp>::erase(const iterator it) {
+        if (it == end())
             throw std::runtime_error("end iterator passed to erase function in tree");
+        ListIt z = it.ptr;
         ListIt node = root_;
-        
+
         while (node != z) {
             node->subtreeSize--;
             if (compare(z->key, node->key))
@@ -318,7 +411,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-    void SearchTree<KeyT, Comp>::eraseFixup(iterator x) {
+    void SearchTree<KeyT, Comp>::eraseFixup(ListIt x) {
         ListIt w;
         while (x != root_ && x->color == Color::Black) {
             if (x == x->p->left) {
@@ -397,7 +490,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-    void SearchTree<KeyT, Comp>::dump_impl(iterator node) const {
+    void SearchTree<KeyT, Comp>::dump_impl(ListIt node) const {
         char c1 = node->color == Color::Black ? 'b' : 'r';
         std::cout << "node: " << node->key << c1 << node->subtreeSize << ' ';
         if (node->p == nil_)
@@ -455,7 +548,7 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-    SearchTree<KeyT, Comp>::iterator SearchTree<KeyT, Comp>::nth_element_impl(ListIt node, int n) const
+    SearchTree<KeyT, Comp>::ListIt SearchTree<KeyT, Comp>::nth_element_impl(ListIt node, int n) const
     {
         while (node != nil_) {
             if (n == node->left->subtreeSize + 1)
