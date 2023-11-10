@@ -33,3 +33,9 @@ To run main executable:
 ```
 ./tree
 ```
+
+To run e2e tests:
+```
+cd tests/
+./run_e2e.sh
+```
