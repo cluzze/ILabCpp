@@ -21,6 +21,8 @@ struct CompA {
     }
 };
 
+template class SearchTree<A, CompA>; // explicit instantions for correctness check
+
 bool cmp(const A& a, const A&b) {
     return a.x < b.x;
 }

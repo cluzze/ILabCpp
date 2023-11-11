@@ -99,7 +99,7 @@ namespace containers
             }
 
             const_iterator operator++(int) {
-                iterator tmp(ptr);
+                const_iterator tmp(ptr);
                 ptr++;
                 return *this;
             }
@@ -110,7 +110,7 @@ namespace containers
             }
 
             const_iterator operator--(int) {
-                iterator tmp(ptr);
+                const_iterator tmp(ptr);
                 ptr--;
                 return *this;
             }
@@ -155,8 +155,6 @@ namespace containers
         iterator nth_element(int n) const;
 
         std::vector<KeyT> getInorder() const { return std::vector<KeyT>(cbegin(), cend()); };
-        void printInOrder() const;
-        void dump() const;
     private:
         ListIt next_impl(ListIt node) const;
         ListIt find_impl(ListIt node, KeyT key) const;
@@ -169,11 +167,11 @@ namespace containers
         ListIt insertFixup(ListIt node);
         void transplant(ListIt u, ListIt v);
         void eraseFixup(ListIt node);
-        void dump_impl(ListIt node) const;
 
         ListIt nth_element_impl(ListIt node, int n) const;
 
         bool compare(const KeyT& lhs, const KeyT& rhs) const { return cmp(lhs, rhs); }
+        bool keys_eq(const KeyT& lhs, const KeyT& rhs) const { return !cmp(lhs, rhs) && !cmp(rhs, lhs); }
     };
 
     template <typename KeyT, typename Comp>
@@ -183,7 +181,7 @@ namespace containers
 
     template <typename KeyT, typename Comp>
 	SearchTree<KeyT, Comp>::ListIt SearchTree<KeyT, Comp>::find_impl(ListIt node, KeyT key) const {
-        while (node != nil_ && compare(key, node->key) != compare(node->key, key))
+        while (node != nil_ && !keys_eq(key, node->key))
             if (compare(key, node->key))
                 node = node->left;
             else
@@ -476,58 +474,10 @@ namespace containers
     }
 
     template <typename KeyT, typename Comp>
-    void SearchTree<KeyT, Comp>::printInOrder() const {
-        auto x = nodes.begin();
-        for (; x != nodes.end(); ++x) {
-            std::cout << x->key << ' ';
-        }
-        std::cout << '\n';
-    }
-
-    template <typename KeyT, typename Comp>
-    void SearchTree<KeyT, Comp>::dump() const {
-        if (root_ == nil_) {
-            std::cout << "tree is empty\n";
-            return;
-        }
-
-        dump_impl(root_);
-    }
-
-    template <typename KeyT, typename Comp>
-    void SearchTree<KeyT, Comp>::dump_impl(ListIt node) const {
-        char c1 = node->color == Color::Black ? 'b' : 'r';
-        std::cout << "node: " << node->key << c1 << node->subtreeSize << ' ';
-        if (node->p == nil_)
-            std::cout << "p: " << "nil" << ' ';
-        else {
-            char c = node->p->color == Color::Black ? 'b' : 'r';
-            std::cout << "p: " << node->p->key << c << ' ';
-        }
-        if (node->left == nil_)
-            std::cout << "left: " << "nil" << ' ';
-        else {
-            char c = node->left->color == Color::Black ? 'b' : 'r';
-            std::cout << "left: " << node->left->key << c << ' ';
-        }
-        if (node->right == nil_)
-            std::cout << "right: " << "nil" << ' ';
-        else {
-            char c = node->right->color == Color::Black ? 'b' : 'r';
-            std::cout << "right: " << node->right->key << c << ' ';
-        }
-        std::cout << '\n';
-        if (node->left != nil_)
-            dump_impl(node->left);
-        if (node->right != nil_)
-            dump_impl(node->right);
-    }
-
-    template <typename KeyT, typename Comp>
     int SearchTree<KeyT, Comp>::cnt(KeyT key) const {
         ListIt node = root_, y = nil_;
         int res = root_->subtreeSize;
-        while (node != nil_ && key != node->key) {
+        while (node != nil_ && !keys_eq(key, node->key)) {
             y = node;
             if (compare(key, node->key)) {
                 res -= node->right->subtreeSize + 1;
@@ -537,7 +487,7 @@ namespace containers
             }
         }
 
-        if (node != nil_ && key == node->key) {
+        if (node != nil_ && keys_eq(key, node->key)) {
             res -= node->right->subtreeSize + 1;
         }
 
