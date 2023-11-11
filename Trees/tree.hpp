@@ -151,6 +151,9 @@ namespace containers
         iterator next(iterator it) const { return ++it; }
         void erase(const iterator it);
 
+        int size() const { return nodes.size() - 1; }
+        bool empty() const { return size() == 0; }
+
         int cnt(KeyT key) const;
         iterator nth_element(int n) const;
 

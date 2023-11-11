@@ -30,6 +30,7 @@ bool cmp(const A& a, const A&b) {
 TEST(tree, constructor_non_trivial_class) {
     SearchTree<A, CompA> t;
     t.insert({1, 2});
+    ASSERT_TRUE(t.size() == 1);
     auto it = t.find({1, 2});
     ASSERT_TRUE(it != t.end());
 }
@@ -37,18 +38,22 @@ TEST(tree, constructor_non_trivial_class) {
 TEST(tree, copy_ctr) {
     SearchTree<A, CompA> t;
     t.insert({1, 2});
+    ASSERT_TRUE(t.size() == 1);
     SearchTree<A, CompA> t2(t);
     auto f = [](const A& a, const A&b) {
         return a.x < b.x;
     };
     SearchTree<A, decltype(f)> tree(f);
+    ASSERT_TRUE(tree.empty());
     SearchTree<A, bool (*)(const A&, const A&)> tree2(cmp);
+    ASSERT_TRUE(tree2.empty());
 }
 
 TEST(tree, iterators) {
     SearchTree<int> t;
     for (int i = 1; i <= 5; i++) {
         t.insert(i);
+        ASSERT_TRUE(t.size() == i);
     }
     auto it = t.begin();
     for (int i = 1; i <= 5; i++, ++it) {
@@ -60,11 +65,16 @@ TEST(tree, iterators_erase) {
     SearchTree<int> t;
     for (int i = 1; i <= 5; i++) {
         t.insert(i);
+        ASSERT_TRUE(t.size() == i);
     }
     auto it = t.begin();
     auto it2 = std::next(it);
     t.erase(it);
+    ASSERT_TRUE(t.size() == 4);
     t.erase(it2);
+    ASSERT_TRUE(t.size() == 3);
+    t.insert(5);
+    ASSERT_TRUE(t.size() == 3);
     auto f = t.find(1);
     auto f2 = t.find(2);
     it = t.begin();
