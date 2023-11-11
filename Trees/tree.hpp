@@ -4,12 +4,15 @@
 #include <iostream>
 #include <list>
 #include <stack>
+#include <type_traits>
 
 namespace containers
 {
     template <typename KeyT, typename Comp = std::less<KeyT>>
-	class SearchTree final : private Comp {
+	class SearchTree final {
     private:
+        [[no_unique_address]] Comp cmp;
+
         enum class Color {
             Black = 0,
             Red = 1
@@ -128,7 +131,7 @@ namespace containers
         const_iterator cend() const { return std::prev(nodes.cend()); }
         
     public:
-        SearchTree(Comp comp = Comp()) : Comp(comp) {
+        SearchTree(Comp comp = Comp()) : cmp(comp) {
             nodes.emplace_back(KeyT{}, 0, Color::Black, nodes.end(), nodes.end(), nodes.end());
             nil_ = std::prev(nodes.end());
             nil_->p = nil_;
@@ -136,7 +139,9 @@ namespace containers
             nil_->right = nil_;
             root_ = nil_;
         }
-        SearchTree(std::initializer_list<KeyT> init, Comp comp = Comp()) : Comp(comp) {}
+        SearchTree(std::initializer_list<KeyT> init, Comp comp = Comp()) : SearchTree(comp) {
+            std::for_each(init.begin(), init.end(), [&](auto x) { insert(x); });
+        }
 
     public:
         iterator find(KeyT key) const;
@@ -168,7 +173,7 @@ namespace containers
 
         ListIt nth_element_impl(ListIt node, int n) const;
 
-        bool compare(const KeyT& lhs, const KeyT& rhs) const { return Comp::operator()(lhs, rhs); }
+        bool compare(const KeyT& lhs, const KeyT& rhs) const { return cmp(lhs, rhs); }
     };
 
     template <typename KeyT, typename Comp>

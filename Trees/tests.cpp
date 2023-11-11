@@ -21,6 +21,10 @@ struct CompA {
     }
 };
 
+bool cmp(const A& a, const A&b) {
+    return a.x < b.x;
+}
+
 TEST(tree, constructor_non_trivial_class) {
     SearchTree<A, CompA> t;
     t.insert({1, 2});
@@ -32,6 +36,11 @@ TEST(tree, copy_ctr) {
     SearchTree<A, CompA> t;
     t.insert({1, 2});
     SearchTree<A, CompA> t2(t);
+    auto f = [](const A& a, const A&b) {
+        return a.x < b.x;
+    };
+    SearchTree<A, decltype(f)> tree(f);
+    SearchTree<A, bool (*)(const A&, const A&)> tree2(cmp);
 }
 
 TEST(tree, iterators) {
