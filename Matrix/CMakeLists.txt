@@ -9,7 +9,6 @@ include_directories(include)
 add_library(vector_lib INTERFACE include/vector.hpp)
 add_library(matrix_chain_lib INTERFACE include/matrix_chain.hpp)
 add_library(${PROJECT_NAME}_lib INTERFACE include/matrix.hpp)
-add_compile_options(-g)
 
 find_package(GTest REQUIRED)
 include_directories(${GTest_INCLUDE_DIRS} include)
