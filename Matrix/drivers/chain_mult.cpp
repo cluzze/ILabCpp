@@ -13,5 +13,7 @@ int main() {
         rows = cols;
         chain.addMatrix(m);
     }
-    chain.printOptimalOrder();
+    chain.getOptimalOrder();
+    auto n = chain.getOptimalNumberOfMultiplications();
+    std::cout << n;
 }

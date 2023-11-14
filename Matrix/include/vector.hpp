@@ -76,18 +76,18 @@ namespace containers {
             using iterator_category = std::contiguous_iterator_tag;
             using difference_type = std::ptrdiff_t;
             using value_type = T;
-            using reference_type = T&;
-            using pointer_type = T*;
+            using reference = T&;
+            using pointer = T*;
         
         private:
-            pointer_type ptr;
+            pointer ptr;
 
         public:
-            iterator(pointer_type ptr_ = nullptr) : ptr{ptr_} {}
+            iterator(pointer ptr_ = nullptr) : ptr{ptr_} {}
 
-            pointer_type   operator->() const { return ptr; }
-            reference_type operator*() const { return *ptr; }
-            reference_type operator[](difference_type dif) const { return *(ptr + dif); }
+            pointer   operator->() const { return ptr; }
+            reference operator*() const { return *ptr; }
+            reference operator[](difference_type dif) const { return *(ptr + dif); }
 
             iterator& operator++() {
                 ptr++;
@@ -145,18 +145,18 @@ namespace containers {
             using iterator_category = std::contiguous_iterator_tag;
             using difference_type = std::ptrdiff_t;
             using value_type = const T;
-            using reference_type = const T&;
-            using pointer_type = const T*;
+            using reference = const T&;
+            using pointer = const T*;
         
         private:
-            pointer_type ptr;
+            pointer ptr;
 
         public:
-            const_iterator(pointer_type ptr_ = nullptr) : ptr{ptr_} {}
+            const_iterator(pointer ptr_ = nullptr) : ptr{ptr_} {}
 
-            pointer_type   operator->() const { return ptr; }
-            reference_type operator*() const { return *ptr; }
-            reference_type operator[](difference_type dif) const { return *(ptr + dif); }
+            pointer   operator->() const { return ptr; }
+            reference operator*() const { return *ptr; }
+            reference operator[](difference_type dif) const { return *(ptr + dif); }
 
             const_iterator& operator++() {
                 ptr++;
